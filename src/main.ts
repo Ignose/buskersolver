@@ -1,13 +1,26 @@
-import { myMp, print } from "kolmafia";
+import { print } from "kolmafia";
+import { Task } from "./task";
+import { getTasks } from "grimoire-kolmafia";
+import { Engine } from "./engine";
+import { DoSetup } from "./doSetup";
+import { ExecuteWaffles } from "./executeWaffles";
 
-export function checkMP(): string {
-  if (myMp() < 200) {
-    return "Your MP is less than 200.";
-  } else {
-    return "Your MP is greater than or equal to 200.";
-  }
-}
+const version = "0.0.1";
 
 export function main(): void {
-  print(checkMP());
+  print(`Running: wafflo v${version}`);
+
+  const tasks: Task[] = getTasks([DoSetup(), ExecuteWaffles()]);
+
+  const engine = new Engine(tasks);
+
+  try {
+    // Print the next task that will be executed, if it exists
+    const task = engine.getNextTask();
+    if (task) {
+      print(`Next: ${task.name}`, "blue");
+    }
+  } finally {
+    engine.destruct();
+  }
 }
