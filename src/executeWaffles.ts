@@ -1,26 +1,6 @@
-import {
-  eat,
-  fullnessLimit,
-  inebrietyLimit,
-  myAdventures,
-  myFullness,
-  myInebriety,
-  retrieveItem,
-} from "kolmafia";
-import { buyWaffles, checkProfit, getBestFreeFight } from "./lib";
+import { getBestFreeFight } from "./lib";
 import { Quest } from "./task";
-import {
-  $effect,
-  $familiar,
-  $item,
-  $location,
-  $monster,
-  $skill,
-  CombatLoversLocket,
-  Macro,
-  get,
-  have,
-} from "libram";
+import { $effect, $familiar, $item, $location, $monster, $skill, Macro, get, have } from "libram";
 import { CombatStrategy } from "grimoire-kolmafia";
 
 const setupDone =
@@ -37,7 +17,9 @@ export function ExecuteWaffles(): Quest {
   return {
     name: "Let's toss some waffles",
     ready: () => setupDone,
-    completed: () => !have($item`Waffle`),
+    completed: () =>
+      !have($item`Waffle`) ||
+      (get("_monsterHabitatsFightsLeft") === 0 && get("_monsterHabitatsRecalled") === 3),
     tasks: [
       {
         name: "Do Them Fights",
@@ -59,7 +41,8 @@ export function ExecuteWaffles(): Quest {
           weapon: $item`June Cleaver`,
           offhand: $item`Can of Mixed Everything`,
           pants: $item`Designer Sweatpants`,
-          familiar: $familiar`Grey Goose`,
+          familiar:
+            get("gooseDronesRemaining") <= 2 ? $familiar`Grey Goose` : $familiar`CookBookBat`,
           famequip: $item`tiny rake`,
           acc1: $item`Mafia Thumb Ring`,
           acc2: $item`Lucky Gold Ring`,
