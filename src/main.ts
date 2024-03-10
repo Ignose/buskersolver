@@ -4,6 +4,7 @@ import { getTasks } from "grimoire-kolmafia";
 import { Engine } from "./engine";
 import { DoSetup } from "./doSetup";
 import { ExecuteWaffles } from "./executeWaffles";
+import { jobsDone } from "./lib";
 
 const version = "0.0.1";
 
@@ -16,9 +17,13 @@ export function main(): void {
 
   try {
     // Print the next task that will be executed, if it exists
-    const task = engine.getNextTask();
-    if (task) {
-      print(`Next: ${task.name}`, "blue");
+    while (!jobsDone) {
+      const task = engine.getNextTask();
+      if (task === undefined) throw "Unable to find available task, but the run is not complete";
+      engine.execute(task);
+      if (task) {
+        print(`Next: ${task.name}`, "blue");
+      }
     }
   } finally {
     engine.destruct();

@@ -22,18 +22,17 @@ export function DoSetup(): Quest {
   return {
     name: "Let's set everything up",
     ready: () => buyWaffles(),
-    completed: () =>
-      myAdventures() === 0 || myInebriety() > inebrietyLimit() || !buyWaffles() || setupDone,
+    completed: () => myAdventures() === 0 || myInebriety() > inebrietyLimit() || setupDone,
     tasks: [
       {
         name: "Buy Waffles",
-        completed: () => !buyWaffles(),
+        completed: () => !buyWaffles() || have($item`Waffle`, 100),
         do: (): void => {
           while (buyWaffles()) {
             retrieveItem($item`waffle`, 1);
           }
         },
-        limit: { tries: 10 },
+        limit: { tries: 1 },
       },
       {
         name: "Acquire Familiar XP",

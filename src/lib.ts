@@ -7,6 +7,7 @@ import {
   mallPrice,
   myFullness,
   myMeat,
+  print,
   toInt,
 } from "kolmafia";
 import { $familiar, $item, $monster, $skill, get, have } from "libram";
@@ -17,6 +18,10 @@ const freeFightsToCheck = new Map([
   [$monster`Witchess Bishop`, mallPrice($item`Sacramento Wine`)],
   [$monster`Witchess Rook`, mallPrice($item`Greek Fire`)],
 ]);
+
+export const jobsDone =
+  !have($item`Waffle`) ||
+  (get("_monsterHabitatsFightsLeft") === 0 && get("_monsterHabitatsRecalled") === 3);
 
 export function getBestFreeFightValue(): number {
   let maxMonster: Monster | null = null;
@@ -30,6 +35,7 @@ export function getBestFreeFightValue(): number {
   }
 
   if (have($familiar`Grey Goose`)) maxValue = maxValue * 2;
+  print(`Expected Drop is ${maxValue}`);
   return maxValue;
 }
 
@@ -43,11 +49,12 @@ export function getBestFreeFight(): Monster {
       maxMonster = monster;
     }
   }
-
+  print(`Chosen Monster is ${maxMonster}`);
   return maxMonster;
 }
 
 export function buyWaffles(): boolean {
+  print(`Cheapeast waffle is ${mallPrice($item`waffle`)}`);
   return mallPrice($item`waffle`) < getBestFreeFightValue();
 }
 
