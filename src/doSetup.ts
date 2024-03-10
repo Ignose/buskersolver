@@ -6,6 +6,7 @@ import {
   myFullness,
   myInebriety,
   retrieveItem,
+  use,
 } from "kolmafia";
 import { buyWaffles, checkProfit, getBestFreeFight } from "./lib";
 import { Quest } from "./task";
@@ -35,6 +36,12 @@ export function DoSetup(): Quest {
         limit: { tries: 1 },
       },
       {
+        name: "LGR Seed",
+        completed: () =>
+          !have($item`lucky gold ring`) || get("_stenchAirportToday") || get("stenchAirportAlways"),
+        do: () => use($item`one-day ticket to Dinseylandfill`),
+      },
+      {
         name: "Acquire Familiar XP",
         completed: () => have($effect`Feeling Fancy`) || myFullness() + 2 >= fullnessLimit(),
         do: (): void => {
@@ -57,13 +64,14 @@ export function DoSetup(): Quest {
         },
         combat: new CombatStrategy().macro(
           Macro.trySkill($skill`Recall Facts: Monster Habitats`)
-            .trySkill($skill`Spring Kick`)
             .trySkill($skill`Emit Matter Duplicating Drones`)
-            .attack()
+            .trySkillRepeat($skill`Lunging Thrust-Smack`)
         ),
         outfit: () => ({
           weapon: $item`June Cleaver`,
           familiar: $familiar`Grey Goose`,
+          acc1: $item`Lucky Gold Ring`,
+          acc2: $item`Mafia Thumb Ring`,
           acc3: $item`Spring Shoes`,
         }),
         limit: { tries: 1 },
