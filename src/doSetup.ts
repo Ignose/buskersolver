@@ -1,29 +1,35 @@
-import {
-  eat,
-  fullnessLimit,
-  inebrietyLimit,
-  myAdventures,
-  myFullness,
-  myInebriety,
-  retrieveItem,
-  use,
-} from "kolmafia";
-import { buyWaffles, checkProfit, getBestFreeFight } from "./lib";
+import { eat, fullnessLimit, myFullness, print, restoreMp, retrieveItem, use } from "kolmafia";
+import { buyWaffles, checkProfit, getBestFreeFightMonster } from "./lib";
 import { Quest } from "./task";
-import { $effect, $familiar, $item, $skill, CombatLoversLocket, Macro, get, have } from "libram";
+import {
+  $effect,
+  $item,
+  $location,
+  $monster,
+  $skill,
+  CombatLoversLocket,
+  Macro,
+  get,
+  have,
+} from "libram";
 import { CombatStrategy } from "grimoire-kolmafia";
+import { baseOutfit } from "./outfit";
 
-const setupDone =
-  have($item`Waffle`) &&
-  have($effect`Feeling Fancy`) &&
-  get("_monsterHabitatsMonster") === getBestFreeFight() &&
-  have($effect`Eldritch Attunement`);
+function setupDone(): boolean {
+  if (
+    have($item`Waffle`) &&
+    have($effect`Feeling Fancy`) &&
+    get("_monsterHabitatsMonster") === getBestFreeFightMonster().monster &&
+    have($effect`Eldritch Attunement`)
+  )
+    return true;
+  return false;
+}
 
 export function DoSetup(): Quest {
   return {
     name: "Let's set everything up",
-    ready: () => buyWaffles(),
-    completed: () => myAdventures() === 0 || myInebriety() > inebrietyLimit() || setupDone,
+    completed: () => setupDone() && have($item`waffle`, 100),
     tasks: [
       {
         name: "Buy Waffles",
@@ -37,9 +43,13 @@ export function DoSetup(): Quest {
       },
       {
         name: "LGR Seed",
-        completed: () =>
-          !have($item`lucky gold ring`) || get("_stenchAirportToday") || get("stenchAirportAlways"),
-        do: () => use($item`one-day ticket to Dinseylandfill`),
+        completed: () => get("_stenchAirportToday") || get("stenchAirportAlways"),
+        do: (): void => {
+          if (!have($item`one-day ticket to Dinseylandfill`))
+            retrieveItem($item`one-day ticket to Dinseylandfill`);
+          use($item`one-day ticket to Dinseylandfill`);
+        },
+        limit: { tries: 1 },
       },
       {
         name: "Acquire Familiar XP",
@@ -51,34 +61,43 @@ export function DoSetup(): Quest {
         limit: { tries: 1 },
       },
       {
+        name: "Sniff and Run",
+        prepare: () => restoreMp(200),
+        completed: () => get("olfactedMonster") === $monster`Crate`,
+        do: $location`Noob Cave`,
+        combat: new CombatStrategy().macro(
+          Macro.trySkill($skill`Transcendent Olfaction`)
+            .trySkill($skill`Gallapagosian Mating Call`)
+            .trySkill($skill`Offer Latte to Opponent`)
+            .trySkill($skill`Emit Matter Duplicating Drones`)
+            .trySkill($skill`Spring Away`)
+        ),
+        outfit: baseOutfit(true),
+        limit: { tries: 1 },
+      },
+      {
         name: "Grab a free fight",
         ready: () => have($effect`Feeling Fancy`),
         completed: () =>
           checkProfit() ||
           !have($item`waffle`) ||
           get("_monsterHabitatsRecalled") >= 3 ||
-          (get("_monsterHabitatsMonster") === getBestFreeFight() &&
+          (get("_monsterHabitatsMonster") === getBestFreeFightMonster().monster &&
             get("_monsterHabitatsFightsLeft") > 0),
         do: (): void => {
-          CombatLoversLocket.reminisce(getBestFreeFight());
+          CombatLoversLocket.reminisce(getBestFreeFightMonster().monster);
         },
         combat: new CombatStrategy().macro(
           Macro.trySkill($skill`Recall Facts: Monster Habitats`)
             .trySkill($skill`Emit Matter Duplicating Drones`)
             .trySkillRepeat($skill`Lunging Thrust-Smack`)
         ),
-        outfit: () => ({
-          weapon: $item`June Cleaver`,
-          familiar: $familiar`Grey Goose`,
-          acc1: $item`Lucky Gold Ring`,
-          acc2: $item`Mafia Thumb Ring`,
-          acc3: $item`Spring Shoes`,
-        }),
+        outfit: baseOutfit(false),
         limit: { tries: 1 },
       },
       {
         name: "Finish Buffing Up",
-        ready: () => get("_monsterHabitatsMonster") === getBestFreeFight(),
+        ready: () => get("_monsterHabitatsMonster") === getBestFreeFightMonster().monster,
         completed: () => have($effect`Eldritch Attunement`),
         do: (): void => {
           retrieveItem($item`eldritch mushroom pizza`);

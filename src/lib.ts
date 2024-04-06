@@ -1,79 +1,40 @@
-import {
-  Item,
-  Monster,
-  availableAmount,
-  fullnessLimit,
-  getProperty,
-  mallPrice,
-  myFullness,
-  myMeat,
-  print,
-  toInt,
-} from "kolmafia";
-import { $familiar, $item, $monster, $skill, get, have } from "libram";
+import { Monster, availableAmount, getProperty, mallPrice, print, toInt } from "kolmafia";
+import { $item, $monster, get, have, maxBy } from "libram";
 
-const freeFightsToCheck = new Map([
-  [$monster`Witchess Knight`, mallPrice($item`Jumping Horseradish`)],
-  [$monster`Witchess Pawn`, mallPrice($item`armored prawn`)],
-  [$monster`Witchess Bishop`, mallPrice($item`Sacramento Wine`)],
-  [$monster`Witchess Rook`, mallPrice($item`Greek Fire`)],
-]);
+type FreeFight = {
+  monster: Monster;
+  value: number;
+};
 
-export const jobsDone =
-  !have($item`Waffle`) ||
-  (get("_monsterHabitatsFightsLeft") === 0 && get("_monsterHabitatsRecalled") === 3);
+const freeFightsToCheck: FreeFight[] = [
+  { monster: $monster`Witchess Knight`, value: mallPrice($item`Jumping Horseradish`) },
+  { monster: $monster`Witchess Pawn`, value: mallPrice($item`armored prawn`) },
+  { monster: $monster`Witchess Bishop`, value: mallPrice($item`Sacramento Wine`) },
+  { monster: $monster`Witchess Rook`, value: mallPrice($item`Greek Fire`) },
+];
 
-export function getBestFreeFightValue(): number {
-  let maxMonster: Monster | null = null;
-  let maxValue = -1;
+export function getBestFreeFightMonster(): { monster: Monster; value: number } {
+  const bestFight: FreeFight = maxBy(freeFightsToCheck, "value");
+  const { monster, value } = bestFight;
 
-  for (const [monster, value] of freeFightsToCheck) {
-    if (value > maxValue) {
-      maxValue = value;
-      maxMonster = monster;
-    }
-  }
-
-  if (have($familiar`Grey Goose`)) maxValue = maxValue * 2;
-  print(`Expected Drop is ${maxValue}`);
-  return maxValue;
-}
-
-export function getBestFreeFight(): Monster {
-  let maxMonster: Monster = $monster`Witchess Knight`;
-  let maxValue = -1;
-
-  for (const [monster, value] of freeFightsToCheck) {
-    if (value > maxValue) {
-      maxValue = value;
-      maxMonster = monster;
-    }
-  }
-  print(`Chosen Monster is ${maxMonster}`);
-  return maxMonster;
+  print(`Chosen Monster is ${monster} with value ${value}`);
+  return { monster, value };
 }
 
 export function buyWaffles(): boolean {
-  print(`Cheapeast waffle is ${mallPrice($item`waffle`)}`);
-  return mallPrice($item`waffle`) < getBestFreeFightValue();
+  const bestFreeFightMonster = getBestFreeFightMonster();
+  const bestFreeFightValue = bestFreeFightMonster.value;
+
+  print(`Cheapest waffle is ${mallPrice($item`waffle`)}`);
+  return mallPrice($item`waffle`) < bestFreeFightValue * 2 + 2000;
 }
 
 export function checkProfit(): boolean {
+  const bestFreeFightMonster = getBestFreeFightMonster();
+  const bestFreeFightValue = bestFreeFightMonster.value;
+
   return (
     get("valueOfAdventure") * toInt(getProperty("garbo_embezzlerMultiplier")) <
-    availableAmount($item`waffle`) * getBestFreeFightValue()
+    availableAmount($item`waffle`) * bestFreeFightMonster.value
   );
-}
-
-export function canRun(): boolean {
-  const haveBofa =
-    have($skill`Recall Facts: Monster Habitats`) &&
-    get("_monsterHabitatsRecalled") < 3 &&
-    get("_monsterHabitatsFightsLeft") === 0;
-  const haveSpringShoes = have($item`Spring Shoes`);
-  const haveGooso = have($familiar`Grey Goose`);
-  const haveOrgans = myFullness() + 5 <= fullnessLimit();
-  const canInvest = myMeat() >= 5000000;
-
-  return haveBofa && haveSpringShoes && haveGooso && haveOrgans && canInvest;
 }

@@ -1,124 +1,95 @@
-import { Task } from "./task";
-import { Engine as BaseEngine, Outfit, outfitSlots } from "grimoire-kolmafia";
 import {
-  $effect,
-  $familiar,
-  $item,
-  $skill,
-  get,
-  have,
-  PropertiesManager,
-  undelay,
-  uneffect,
-} from "libram";
-import { Item, myHp, myMaxhp, print, useSkill } from "kolmafia";
+  CombatResources,
+  CombatStrategy,
+  Engine,
+  Quest as BaseQuest,
+  Task as BaseTask,
+  Limit,
+} from "grimoire-kolmafia";
+import { cliExecute, Location, logprint, setAutoAttack, writeCcs } from "kolmafia";
+import { clearMaximizerCache } from "libram";
+import { printProfits, ProfitTracker } from "./profits";
 
-export class Engine extends BaseEngine {
-  public getNextTask(): Task | undefined {
-    return this.tasks.find((task) => !task.completed() && (task.ready ? task.ready() : true));
+const grimoireCCS = "grimoire_macro";
+const ccsAbortString = "if pastround 2;abort Failed to finish combat in autoattack;endif;";
+
+export type Task = BaseTask & {
+  tracking?: string;
+  limit?: Limit;
+  clear?: "all" | "outfit" | "macro" | ("outfit" | "macro")[];
+};
+export type Quest = BaseQuest<Task>;
+
+export class ProfitTrackingEngine extends Engine<never, Task> {
+  profits: ProfitTracker;
+  constructor(tasks: Task[], key: string) {
+    super(tasks);
+    this.profits = new ProfitTracker(key);
   }
 
-  public execute(task: Task): void {
-    if (have($effect`Beaten Up`)) {
-      if (
-        get("_lastCombatLost") &&
-        !get("lastEncounter").includes("Sssshhsssblllrrggghsssssggggrrgglsssshhssslblgl")
-      )
-        throw "Fight was lost; stop.";
-      else uneffect($effect`Beaten Up`);
-    }
-    if (task.completed()) {
-      print(`${task.name} completed!`, "blue");
-    } else {
-      print(`${task.name} not completed!`, "blue");
-    }
-  }
+  setCombat(
+    task: Task,
+    task_combat: CombatStrategy<never>,
+    task_resources: CombatResources<never>
+  ): void {
+    // Save regular combat macro
+    const macro = task_combat.compile(
+      task_resources,
+      this.options?.combat_defaults,
+      task.do instanceof Location ? task.do : undefined
+    );
+    if (macro.toString().length > 1) {
+      macro.save();
+      if (!this.options.ccs) {
+        // Use the macro through a CCS file
+        const otherCCSEntries = task_combat.compileCcs();
+        const ccsContents = [
+          "[default]",
+          `"${ccsAbortString}${macro.toString()}"`,
+          ...otherCCSEntries,
+        ].join("\n");
 
-  createOutfit(task: Task): Outfit {
-    // Handle unequippables in outfit here
-    const spec = undelay(task.outfit);
-    if (spec === undefined) {
-      return new Outfit();
-    }
+        // Log Macro + other CCS
+        logprint(`CCS: ${ccsContents.replace("\n", "\\n ")}`);
 
-    if (spec.familiar && !have(spec.familiar)) {
-      print(`Ignoring using a familiar because we don't have ${spec.familiar}`, "red");
-      spec.familiar = $familiar.none;
-    }
-
-    if (spec instanceof Outfit) {
-      const badSlots = Array.from(spec.equips.entries())
-        .filter(([, it]) => !have(it) && it !== $item.none)
-        .map(([s]) => s);
-      badSlots.forEach((s) => {
-        print(`Ignoring slot ${s} because we don't have ${spec.equips.get(s) ?? ""}`, "red");
-        spec.equips.delete(s);
-      });
-      return spec.clone();
-    }
-
-    // spec is an OutfitSpec
-    for (const slotName of outfitSlots) {
-      const itemOrItems = spec[slotName];
-      if (itemOrItems) {
-        if (itemOrItems instanceof Item) {
-          if (!have(itemOrItems) && itemOrItems !== null) {
-            print(`Ignoring slot ${slotName} because we don't have ${itemOrItems}`, "red");
-            spec[slotName] = undefined;
+        if (ccsContents !== this.cachedCcsContents) {
+          writeCcs(ccsContents, grimoireCCS);
+          cliExecute(`ccs ${grimoireCCS}`); // force Mafia to reparse the ccs
+          const autoattack = task_combat.compileAutoattack().step(macro);
+          if (autoattack.toString().length > 1) {
+            autoattack.save();
+            autoattack.setAutoAttack();
+          } else {
+            setAutoAttack(0);
           }
-        } else {
-          if (!itemOrItems.some((it) => have(it) && it !== null)) {
-            print(
-              `Ignoring slot ${slotName} because we don't have ${itemOrItems
-                .map((it) => it.name)
-                .join(", ")}`,
-              "red"
-            );
-            spec[slotName] = undefined;
-          }
+          this.cachedCcsContents = ccsContents;
         }
       }
     }
-    return Outfit.from(spec, new Error("Failed to equip outfit"));
   }
 
-  dress(task: Task, outfit: Outfit): void {
-    super.dress(task, outfit);
+  public checkLimits(task: Task, postcondition: (() => boolean) | undefined): void {
+    if (task.clear && !(task.clear instanceof Array))
+      task.clear = task.clear === "all" ? ["outfit", "macro"] : [task.clear]; //convert to an array of appropriate strings
+    if (task.clear && task.clear.includes("macro")) this.cachedCcsContents = "";
+    if (task.clear && task.clear.includes("outfit")) {
+      clearMaximizerCache();
+    }
+
+    super.checkLimits({ limit: { tries: 1 }, ...task }, postcondition); //sets the default value of limit
   }
 
-  prepare(task: Task): void {
-    super.prepare(task);
-    if (task.combat !== undefined && myHp() < myMaxhp() * 0.9) useSkill($skill`Cannelloni Cocoon`);
+  execute(task: Task): void {
+    try {
+      super.execute(task);
+    } finally {
+      this.profits.record(`@${task.tracking ?? "Other"}`);
+    }
   }
 
-  initPropertiesManager(manager: PropertiesManager): void {
-    super.initPropertiesManager(manager);
-    const bannedAutoRestorers = [
-      "sleep on your clan sofa",
-      "rest in your campaway tent",
-      "rest at the chateau",
-      "rest at your campground",
-      "free rest",
-    ]; /*add a comment for lulz*/
-    const bannedAutoHpRestorers = [...bannedAutoRestorers];
-    const bannedAutoMpRestorers = [...bannedAutoRestorers];
-    const hpItems = get("hpAutoRecoveryItems")
-      .split(";")
-      .filter((s) => !bannedAutoHpRestorers.includes(s))
-      .join(";");
-    const mpItems = Array.from(
-      new Set([...get("mpAutoRecoveryItems").split(";"), "doc galaktik's invigorating tonic"])
-    )
-      .filter((s) => !bannedAutoMpRestorers.includes(s))
-      .join(";");
-    manager.set({
-      autoSatisfyWithCloset: false,
-      hpAutoRecovery: -0.05,
-      mpAutoRecovery: -0.05,
-      maximizerCombinationLimit: 0,
-      hpAutoRecoveryItems: hpItems,
-      mpAutoRecoveryItems: mpItems,
-      shadowLabyrinthGoal: "effects",
-    });
+  destruct(): void {
+    super.destruct();
+    this.profits.save();
+    printProfits(this.profits.all());
   }
 }
