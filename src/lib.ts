@@ -1,5 +1,5 @@
 import { Monster, availableAmount, getProperty, mallPrice, print, toInt } from "kolmafia";
-import { $item, $monster, get, have, maxBy } from "libram";
+import { $familiar, $item, $monster, get, have, maxBy } from "libram";
 
 type FreeFight = {
   monster: Monster;
@@ -16,25 +16,22 @@ const freeFightsToCheck: FreeFight[] = [
 export function getBestFreeFightMonster(): { monster: Monster; value: number } {
   const bestFight: FreeFight = maxBy(freeFightsToCheck, "value");
   const { monster, value } = bestFight;
-
-  print(`Chosen Monster is ${monster} with value ${value}`);
   return { monster, value };
 }
 
-export function buyWaffles(): boolean {
-  const bestFreeFightMonster = getBestFreeFightMonster();
-  const bestFreeFightValue = bestFreeFightMonster.value;
+export function sim(): void {
+  const dropValue = getBestFreeFightMonster().value;
+  const trainsetValue = dropValue * 1.25;
+  const goosoValue = have($familiar`Grey Goose`) ? 2 : 1;
+  const batValue = have($familiar`CookBookBat`) ? mallPrice($item`Yeast of Boris`) / 11 / 3 : 0;
+  const monsterValue = dropValue * goosoValue + trainsetValue + batValue;
+  const wafflePrice = mallPrice($item`waffle`);
+  const expectedProfit = monsterValue - wafflePrice;
+  const opportunityCost =
+    get("valueOfAdventure") * toInt(getProperty("garbo_embezzlerMultiplier")) * 15;
+  const worthIt = expectedProfit * 160 - opportunityCost;
+  const doIt = worthIt > 0 ? "" : "not";
 
-  print(`Cheapest waffle is ${mallPrice($item`waffle`)}`);
-  return mallPrice($item`waffle`) < bestFreeFightValue * 2 + 2000;
-}
-
-export function checkProfit(): boolean {
-  const bestFreeFightMonster = getBestFreeFightMonster();
-  const bestFreeFightValue = bestFreeFightMonster.value;
-
-  return (
-    get("valueOfAdventure") * toInt(getProperty("garbo_embezzlerMultiplier")) <
-    availableAmount($item`waffle`) * bestFreeFightMonster.value
-  );
+  print(`Your expected profit per waffle is ${expectedProfit}`);
+  print(`In theory, this is worth ${worthIt} relative to KGEs. You should ${doIt} do it.`);
 }
