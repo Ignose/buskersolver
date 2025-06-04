@@ -1,6 +1,6 @@
 import { Effect, getPower, Item, Modifier, numericModifier, print, toEffect, toSlot } from "kolmafia";
 import { PHPMTRand } from "kol-rng";
-import { $effect, $effects, $familiar, $skill, $slot, have } from "libram";
+import { $effect, $effects, $familiar, $item, $skill, $slot, have } from "libram";
 
 const effects = [
   5, 10, 11, 12, 14, 16, 18, 19, 21, 22, 23, 24, 25, 26, 28, 30, 31, 32, 33, 34,
@@ -154,19 +154,20 @@ export interface BuskResult {
 // eslint-disable-next-line libram/verify-constants
 const uselessEffects = new Set($effects`How to Scam Tourists, Leash of Linguini, Empathy, Thoughtful Empathy, Billiards Belligerence, Blood Bond, Do I Know You From Somewhere?, Shortly Stacked, You Can Really Taste the Dormouse, Sigils of Yeg, The Magic of LOV`);
 
-function scoreBusk(effects: Effect[], modifiers: Modifier[]): number {
+function scoreBusk(effects: Effect[], weightedModifiers: [Modifier, number][]): number {
   const usefulEffects = effects.filter((ef) => !uselessEffects.has(ef));
 
-  return modifiers.reduce(
-    (total, mod) =>
-      total + usefulEffects.reduce((sum, ef) => sum + numericModifier(ef, mod), 0),
+  return weightedModifiers.reduce(
+    (total, [mod, weight]) =>
+      total +
+      usefulEffects.reduce((sum, ef) => sum + weight * numericModifier(ef, mod), 0),
     0
   );
 }
 
 export function findTopBusksFast(
   generateOne: (seed: number, count: number, print?: boolean) => [number, Effect][],
-  targets: Modifier[]
+  weightedModifiers: [Modifier, number][]
 ): BuskResult | null {
   const allBusks = beretDASum.flatMap((daRaw) => {
     const da = daRaw / 5;
@@ -178,16 +179,13 @@ export function findTopBusksFast(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         .map(([_, eff]) => eff)
         .filter((e) => e !== $effect.none);
-
       const effects = Array.from(new Set(raw));
-      const score = scoreBusk(effects, targets);
-      return { seed, da, effects, score, buskIndex: buskIndex };
+      const score = scoreBusk(effects, weightedModifiers);
+      return { seed, da, effects, score, buskIndex };
     });
   });
 
-  // Group by buskIndex and pick best busk for each index
   const bestBusksByIndex = new Map<number, Busk>();
-
   for (const busk of allBusks) {
     const existing = bestBusksByIndex.get(busk.buskIndex);
     if (!existing || busk.score > existing.score) {
@@ -203,6 +201,41 @@ export function findTopBusksFast(
   return { score: totalScore, busks: topBusks };
 }
 
+function reconstructOutfit(da: number): { hat?: Item; shirt?: Item; pants?: Item } {
+  // eslint-disable-next-line libram/verify-constants
+  const beret = $item`prismatic beret`;
+
+  if (!have($familiar`Mad Hatrack`)) {
+    // Beret is always 20 power
+    for (const shirt of allShirts) {
+      const shirtPower = getPower(shirt);
+      for (const pants of allPants) {
+        const pantsPower = have($skill`Tao of the Terrapin`) ? 2 * getPower(pants) : getPower(pants);
+        const total = 20 + shirtPower + pantsPower;
+        if (total === da) {
+          return { hat: beret, shirt, pants };
+        }
+      }
+    }
+    return { hat: beret };
+  }
+
+  for (const hat of allHats) {
+    const hatPower = have($skill`Tao of the Terrapin`) ? 2 * getPower(hat) : getPower(hat);
+    for (const shirt of allShirts) {
+      const shirtPower = getPower(shirt);
+      for (const pants of allPants) {
+        const pantsPower = have($skill`Tao of the Terrapin`) ? 2 * getPower(pants) : getPower(pants);
+        if (hatPower + shirtPower + pantsPower === da) {
+          return { hat, shirt, pants };
+        }
+      }
+    }
+  }
+
+  return {};
+}
+
 export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]): void {
   if (!result) {
     print("No result found.");
@@ -212,9 +245,7 @@ export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]
   print(`Score: ${result.score}`);
   print("\nBusk Info:");
 
-  // Group busks by buskIndex and pick the best scoring busk per index
   const bestBusksByIndex = new Map<number, Busk>();
-
   for (const busk of result.busks) {
     const existing = bestBusksByIndex.get(busk.buskIndex);
     if (!existing || busk.score > existing.score) {
@@ -222,13 +253,11 @@ export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]
     }
   }
 
-  // Get best busks sorted by buskIndex (Busk 1, 2, 3, 4, 5)
   const bestBusks = Array.from(bestBusksByIndex.values()).sort(
     (a, b) => a.buskIndex - b.buskIndex
   );
 
   for (const busk of bestBusks) {
-    const pow = busk.da * 5;
     const effectNames = busk.effects.map((e) => e.name).join(", ");
     const modifierValues = modifiers
       .map((mod) => {
@@ -236,22 +265,14 @@ export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]
         return `${mod.name}: ${total}`;
       })
       .join(", ");
-    print(`DA ${pow} Busk ${busk.buskIndex + 1}, Effects: ${effectNames}, ${modifierValues}`);
-  }
+    print(`DA ${busk.da * 5} Busk ${busk.buskIndex + 1}, Effects: ${effectNames}, ${modifierValues}`);
 
-  print("\nExpected Unique Effects:");
-  const uniqueEffects = new Map<number, Effect>();
-  for (const busk of bestBusks) {
-    for (const effect of busk.effects) {
-      uniqueEffects.set(effect.id, effect);
-    }
-  }
-
-  for (const effect of uniqueEffects.values()) {
-    print(`  - ${effect.name}`);
+    const { hat, shirt, pants } = reconstructOutfit(busk.da * 5);
+    print(`  - Equipment: Hat = ${hat?.name ?? "?"}, Shirt = ${shirt?.name ?? "?"}, Pants = ${pants?.name ?? "?"}`);
   }
 }
 
+// Equipment setup
 const allItems = Item.all().filter((i) => have(i));
 const allHats = allItems.filter((i) => toSlot(i) === $slot`hat`);
 const allPants = allItems.filter((i) => toSlot(i) === $slot`pants`);
@@ -261,7 +282,7 @@ const hatPowers = [...new Set(allHats.map((i) => (have($skill`Tao of the Terrapi
 const hats = !have($familiar`Mad Hatrack`) ? [20] : hatPowers;
 
 const pants = [...new Set(allPants.map((i) => (have($skill`Tao of the Terrapin`) ? 2 : 1) * getPower(i)))];
-const shirts = [...new Set(allShirts.map((i) => (getPower(i))))];
+const shirts = [...new Set(allShirts.map((i) => getPower(i)))];
 
 export let beretDASum: number[] = [];
 
