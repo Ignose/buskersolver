@@ -7387,9 +7387,10 @@ function findTopBusksFast(generateOne, weightedModifiers) {
   var allBusks = beretDASum.flatMap(daRaw => {
     var da = daRaw / 5;
     var pow = da * 5;
+    var softcappedPow = pow > 11000 ? Math.floor(11000 + Math.pow(pow - 11000, 0.8)) : pow;
     var wzrd = Math.ceil(da / 20);
     return Array(5).fill(null).map((_, buskIndex) => {
-      var seed = pow + buskIndex;
+      var seed = softcappedPow + buskIndex;
       var raw = generateOne(seed, wzrd, false).map(_ref5 => {
         var _ref6 = utils_slicedToArray(_ref5, 2),
           eff = _ref6[1];
