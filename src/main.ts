@@ -1,6 +1,6 @@
 
 import { Args } from "grimoire-kolmafia";
-import { findTopBusksFast, generateOne, printBuskResult } from "./buskingtest2";
+import { findTopBusksFast, generateOne, printBuskResult } from "./utils";
 import { Modifier, print, toModifier } from "kolmafia";
 
 const args = Args.create(
