@@ -1,0 +1,258 @@
+import {
+  Effect,
+  getPower,
+  Item,
+  Modifier,
+  numericModifier,
+  print,
+  toEffect,
+  toSlot,
+} from "kolmafia";
+import { PHPMTRand } from "kol-rng";
+import { $effects, $familiar, $item, $skill, $slot, have, sum } from "libram";
+
+const effects = [
+  5, 10, 11, 12, 14, 16, 18, 19, 21, 22, 23, 24, 25, 26, 28, 30, 31, 32, 33, 34, 35, 36, 38, 46, 48,
+  49, 50, 51, 52, 53, 54, 55, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 73, 76, 77, 78, 89,
+  90, 91, 92, 93, 94, 95, 96, 97, 98, 102, 103, 104, 107, 108, 109, 110, 112, 114, 119, 120, 121,
+  122, 123, 124, 125, 126, 128, 129, 130, 131, 132, 138, 145, 150, 151, 152, 153, 154, 155, 156,
+  157, 158, 159, 160, 161, 178, 179, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 210, 212,
+  213, 214, 215, 218, 220, 221, 223, 224, 225, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238,
+  239, 240, 241, 242, 244, 245, 246, 247, 248, 250, 251, 252, 253, 254, 255, 256, 257, 259, 260,
+  261, 262, 263, 269, 270, 271, 272, 273, 274, 276, 277, 278, 279, 289, 290, 291, 304, 305, 306,
+  307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 326, 327,
+  329, 330, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348,
+  349, 350, 351, 353, 354, 355, 356, 358, 359, 360, 361, 362, 363, 364, 368, 370, 371, 372, 373,
+  375, 376, 377, 378, 379, 382, 427, 428, 429, 430, 438, 439, 440, 441, 442, 443, 444, 446, 447,
+  448, 450, 451, 452, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 466, 467, 468, 469, 470,
+  471, 476, 477, 478, 479, 482, 483, 484, 485, 487, 488, 489, 490, 491, 492, 493, 494, 497, 499,
+  501, 502, 504, 505, 506, 507, 512, 513, 514, 515, 516, 517, 519, 520, 521, 525, 526, 527, 528,
+  530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 547, 549, 550, 551, 552, 553, 554,
+  555, 556, 558, 559, 560, 561, 562, 564, 565, 575, 576, 577, 579, 580, 581, 582, 583, 585, 586,
+  587, 588, 603, 604, 605, 614, 617, 618, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 631,
+  632, 634, 635, 636, 637, 638, 640, 644, 645, 646, 647, 648, 649, 650, 651, 654, 655, 656, 657,
+  658, 661, 662, 664, 666, 667, 668, 669, 673, 674, 678, 680, 681, 682, 683, 684, 685, 686, 687,
+  688, 689, 690, 691, 692, 693, 694, 695, 696, 698, 699, 700, 701, 702, 703, 704, 706, 707, 708,
+  710, 711, 716, 717, 719, 720, 722, 723, 724, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736,
+  737, 738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755,
+  756, 757, 759, 765, 768, 777, 778, 779, 780, 781, 783, 788, 796, 797, 798, 799, 800, 801, 802,
+  803, 804, 805, 824, 825, 827, 828, 829, 830, 831, 832, 836, 837, 838, 840, 841, 842, 843, 844,
+  847, 848, 849, 850, 851, 852, 884, 885, 886, 887, 888, 889, 890, 891, 892, 894, 895, 896, 897,
+  898, 899, 900, 901, 902, 903, 904, 905, 906, 907, 909, 911, 912, 913, 914, 915, 916, 917, 919,
+  920, 921, 922, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 942, 943, 944, 945,
+  946, 947, 950, 951, 953, 954, 955, 957, 958, 959, 961, 962, 964, 965, 966, 967, 968, 969, 970,
+  971, 972, 973, 978, 979, 982, 983, 984, 985, 986, 987, 988, 989, 990, 991, 992, 993, 994, 995,
+  997, 998, 999, 1000, 1001, 1002, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025,
+  1027, 1028, 1029, 1031, 1036, 1041, 1043, 1045, 1119, 1120, 1121, 1128, 1132, 1133, 1134, 1135,
+  1136, 1138, 1139, 1140, 1142, 1143, 1151, 1152, 1153, 1154, 1155, 1156, 1157, 1158, 1168, 1169,
+  1172, 1173, 1188, 1189, 1190, 1191, 1192, 1193, 1196, 1197, 1198, 1199, 1200, 1201, 1202, 1203,
+  1204, 1205, 1209, 1210, 1215, 1218, 1219, 1228, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243,
+  1244, 1245, 1246, 1247, 1248, 1249, 1250, 1265, 1266, 1267, 1268, 1269, 1270, 1271, 1272, 1279,
+  1280, 1281, 1282, 1283, 1284, 1291, 1292, 1293, 1294, 1298, 1299, 1300, 1319, 1320, 1321, 1322,
+  1323, 1324, 1330, 1331, 1332, 1333, 1334, 1341, 1342, 1343, 1344, 1346, 1347, 1351, 1352, 1353,
+  1355, 1357, 1358, 1359, 1360, 1361, 1362, 1363, 1365, 1374, 1375, 1376, 1377, 1378, 1382, 1383,
+  1384, 1385, 1386, 1387, 1388, 1389, 1390, 1391, 1392, 1393, 1396, 1397, 1398, 1399, 1400, 1401,
+  1402, 1403, 1404, 1405, 1406, 1407, 1408, 1409, 1410, 1411, 1412, 1425, 1426, 1427, 1435, 1436,
+  1437, 1438, 1440, 1443, 1454, 1455, 1459, 1460, 1461, 1462, 1463, 1480, 1483, 1484, 1485, 1486,
+  1487, 1489, 1490, 1491, 1493, 1494, 1496, 1497, 1498, 1501, 1502, 1503, 1507, 1508, 1509, 1510,
+  1511, 1512, 1513, 1514, 1517, 1518, 1519, 1520, 1521, 1522, 1523, 1524, 1525, 1527, 1528, 1529,
+  1530, 1531, 1534, 1535, 1536, 1538, 1540, 1541, 1542, 1543, 1559, 1563, 1564, 1565, 1566, 1567,
+  1568, 1569, 1571, 1572, 1573, 1574, 1575, 1576, 1577, 1578, 1579, 1580, 1581, 1582, 1583, 1584,
+  1585, 1586, 1587, 1588, 1589, 1590, 1591, 1592, 1593, 1594, 1595, 1596, 1597, 1598, 1599, 1600,
+  1601, 1603, 1604, 1605, 1606, 1607, 1608, 1609, 1610, 1611, 1614, 1615, 1616, 1617, 1618, 1619,
+  1620, 1621, 1622, 1623, 1624, 1625, 1626, 1627, 1628, 1630, 1631, 1632, 1636, 1637, 1638, 1639,
+  1641, 1642, 1643, 1644, 1646, 1647, 1648, 1649, 1650, 1651, 1652, 1653, 1654, 1656, 1658, 1659,
+  1660, 1661, 1662, 1663, 1664, 1698, 1699, 1700, 1701, 1702, 1703, 1704, 1707, 1713, 1715, 1716,
+  1717, 1722, 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1735, 1736, 1738, 1743,
+  1744, 1745, 1747, 1749, 1751, 1752, 1754, 1755, 1756, 1758, 1759, 1760, 1761, 1762, 1763, 1764,
+  1765, 1768, 1769, 1770, 1771, 1772, 1773, 1774, 1775, 1788, 1789, 1792, 1793, 1802, 1806, 1807,
+  1808, 1811, 1813, 1814, 1815, 1816, 1817, 1819, 1820, 1821, 1823, 1824, 1827, 1828, 1832, 1833,
+  1834, 1835, 1836, 1907, 1914, 1915, 1916, 1917, 1918, 1919, 1920, 1921, 1922, 1926, 1927, 1928,
+  1929, 1930, 1932, 1935, 1951, 1952, 1953, 1954, 1955, 1956, 1957, 1958, 1959, 1960, 1961, 1962,
+  1963, 1964, 1965, 1966, 1967, 1968, 1969, 1970, 1971, 1972, 1973, 1974, 1975, 1979, 1980, 1981,
+  1982, 1983, 1984, 1986, 1988, 1989, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2004, 2005,
+  2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021,
+  2022, 2023, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2050, 2063, 2065, 2066, 2067, 2069, 2070,
+  2071, 2076, 2077, 2078, 2079, 2080, 2081, 2082, 2083, 2087, 2088, 2089, 2100, 2101, 2103, 2104,
+  2105, 2106, 2107, 2108, 2109, 2111, 2112, 2117, 2138, 2145, 2146, 2150, 2156, 2157, 2158, 2163,
+  2164, 2180, 2181, 2182, 2183, 2184, 2185, 2186, 2187, 2188, 2189, 2190, 2197, 2198, 2202, 2204,
+  2206, 2210, 2211, 2214, 2218, 2222, 2226, 2234, 2238, 2242, 2246, 2250, 2254, 2258, 2262, 2268,
+  2269, 2280, 2281, 2283, 2284, 2286, 2287, 2288, 2289, 2290, 2291, 2292, 2296, 2297, 2298, 2299,
+  2300, 2301, 2302, 2303, 2304, 2305, 2306, 2307, 2318, 2319, 2321, 2322, 2324, 2325, 2326, 2328,
+  2330, 2332, 2333, 2334, 2335, 2343, 2347, 2348, 2349, 2350, 2351, 2352, 2353, 2355, 2356, 2357,
+  2358, 2359, 2360, 2361, 2362, 2363, 2364, 2365, 2372, 2377, 2378, 2379, 2380, 2381, 2382, 2399,
+  2408, 2420, 2421, 2423, 2424, 2432, 2433, 2434, 2435, 2441, 2442, 2445, 2446, 2447, 2448, 2459,
+  2460, 2465, 2466, 2467, 2468, 2471, 2472, 2473, 2474, 2475, 2476, 2488, 2490, 2491, 2492, 2493,
+  2494, 2495, 2496, 2497, 2498, 2500, 2501, 2502, 2503, 2504, 2505, 2506, 2507, 2508, 2518, 2519,
+  2525, 2526, 2527, 2528, 2529, 2530, 2531, 2532, 2533, 2534, 2535, 2537, 2538, 2548, 2561, 2564,
+  2568, 2569, 2570, 2571, 2572, 2573, 2577, 2579, 2581, 2583, 2584, 2585, 2586, 2587, 2596, 2598,
+  2599, 2600, 2601, 2602, 2623, 2624, 2626, 2627, 2629, 2677, 2683, 2684, 2685, 2686, 2687, 2698,
+  2703, 2704, 2705, 2706, 2707, 2708, 2710, 2711, 2713, 2714, 2715, 2717, 2718, 2719, 2724, 2725,
+  2726, 2727, 2746, 2747, 2748, 2749, 2750, 2751, 2752, 2753, 2754, 2755, 2756, 2757, 2760, 2761,
+  2771, 2772, 2773, 2777, 2778, 2779, 2780, 2783, 2784, 2785, 2786, 2787, 2789, 2809, 2826, 2833,
+  2837, 2839, 2847, 2856, 2857, 2875, 2876, 2877, 2878, 2880, 2895, 2904, 2905, 2906, 2909, 2923,
+  2925, 2926, 2927, 2939, 2958, 2959, 2960, 2961, 2967, 2968, 2970, 2971, 2972, 2973, 2974, 2975,
+  2976, 2978, 2979, 2980, 2981, 2983, 2984, 2985, 2986, 2987, 2988, 2990, 2990,
+];
+
+type PickedEffect = [number, Effect];
+
+const effectMap = new Map(
+  [...effects.entries()].map(([index, effectId]) => [index, toEffect(effectId)])
+);
+
+export function pickEffects(rng: PHPMTRand, count: number): PickedEffect[] {
+  return Array(count)
+    .fill(null)
+    .flatMap(() => {
+      const roll = rng.roll(0, effects.length - 1);
+      const effect = effectMap.get(roll);
+      return effect ? [[roll, effect]] : [];
+    });
+}
+
+export function generateOne(seed: number, effectCount: number): PickedEffect[] {
+  const rng = new PHPMTRand(seed);
+  const buskEffects = pickEffects(rng, effectCount);
+
+  return buskEffects;
+}
+
+export interface Busk {
+  seed: number;
+  da: number;
+  effects: Effect[];
+  score: number;
+  buskIndex: number;
+}
+
+export interface BuskResult {
+  score: number;
+  busks: Busk[];
+}
+
+const uselessEffects = new Set(
+  $effects`How to Scam Tourists, Leash of Linguini, Empathy, Thoughtful Empathy, Billiards Belligerence, Blood Bond, Do I Know You From Somewhere?, Shortly Stacked, You Can Really Taste the Dormouse, Sigils of Yeg, The Magic of LOV`
+);
+
+// eslint-disable-next-line libram/verify-constants
+const beret = $item`prismatic beret`;
+const taoMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
+
+function scoreBusk(effects: Effect[], weightedModifiers: [Modifier, number][]): number {
+  const usefulEffects = effects.filter((ef) => !uselessEffects.has(ef));
+
+  return sum(
+    weightedModifiers,
+    ([modifier, weight]) => weight * sum(usefulEffects, (ef) => numericModifier(ef, modifier))
+  );
+}
+
+export function findTopBusksFast(
+  generateOne: (seed: number, count: number, print?: boolean) => [number, Effect][],
+  weightedModifiers: [Modifier, number][]
+): BuskResult | null {
+  const allBusks = beretDASum.flatMap((daRaw) => {
+    const da = daRaw / 5;
+    const pow = da * 5;
+    const wzrd = Math.ceil(da / 20);
+    return Array(5)
+      .fill(null)
+      .map((_, buskIndex) => {
+        const seed = pow + buskIndex;
+        const raw = generateOne(seed, wzrd, false).map(([, eff]) => eff);
+        const effects = Array.from(new Set(raw));
+        const score = scoreBusk(effects, weightedModifiers);
+        return { seed, da, effects, score, buskIndex };
+      });
+  });
+
+  const bestBusksByIndex = new Map<number, Busk>();
+  for (const busk of allBusks) {
+    const existing = bestBusksByIndex.get(busk.buskIndex);
+    if (!existing || busk.score > existing.score) {
+      bestBusksByIndex.set(busk.buskIndex, busk);
+    }
+  }
+
+  const topBusks = Array.from(bestBusksByIndex.values());
+
+  if (topBusks.length < 5) return null;
+
+  const totalScore = sum(topBusks, "score");
+  return { score: totalScore, busks: topBusks };
+}
+
+function reconstructOutfit(da: number): { hat?: Item; shirt?: Item; pants?: Item } {
+  for (const hat of allHats) {
+    const hatPower = have($skill`Tao of the Terrapin`) ? 2 * getPower(hat) : getPower(hat);
+    for (const shirt of allShirts) {
+      const shirtPower = getPower(shirt);
+      for (const pants of allPants) {
+        const pantsPower = getPower(pants);
+        if (shirtPower + taoMultiplier * (hatPower + pantsPower) === da) {
+          return { hat, shirt, pants };
+        }
+      }
+    }
+  }
+
+  return {};
+}
+
+export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]): void {
+  if (!result) {
+    print("No result found.");
+    return;
+  }
+
+  print(`Score: ${result.score}`);
+  print("\nBusk Info:");
+
+  const bestBusksByIndex = new Map<number, Busk>();
+  for (const busk of result.busks) {
+    const existing = bestBusksByIndex.get(busk.buskIndex);
+    if (!existing || busk.score > existing.score) {
+      bestBusksByIndex.set(busk.buskIndex, busk);
+    }
+  }
+
+  const bestBusks = Array.from(bestBusksByIndex.values()).sort((a, b) => a.buskIndex - b.buskIndex);
+
+  for (const { effects, da, buskIndex } of bestBusks) {
+    const effectNames = effects.map((e) => e.name).join(", ");
+    const modifierValues = modifiers
+      .map((mod) => {
+        const total = sum(effects, (ef) => numericModifier(ef, mod));
+        return `${mod.name}: ${total}`;
+      })
+      .join(", ");
+    print(`DA ${da * 5} Busk ${buskIndex + 1}, Effects: ${effectNames}, ${modifierValues}`);
+
+    const { hat, shirt, pants } = reconstructOutfit(da * 5);
+    print(
+      `  - Equipment: Hat = ${hat?.name ?? "?"}, Shirt = ${shirt?.name ?? "?"}, Pants = ${
+        pants?.name ?? "?"
+      }`
+    );
+  }
+}
+
+// Equipment setup
+const allItems = Item.all().filter((i) => have(i));
+const allHats = have($familiar`Mad Hatrack`)
+  ? allItems.filter((i) => toSlot(i) === $slot`hat`)
+  : [beret];
+const allPants = allItems.filter((i) => toSlot(i) === $slot`pants`);
+const allShirts = allItems.filter((i) => toSlot(i) === $slot`shirt`);
+
+const hats = [...new Set(allHats.map((i) => taoMultiplier * getPower(i)))];
+
+const pants = [...new Set(allPants.map((i) => taoMultiplier * getPower(i)))];
+const shirts = [...new Set(allShirts.map((i) => getPower(i)))];
+
+export const beretDASum = [
+  ...new Set(
+    hats.flatMap((hat) => pants.flatMap((pant) => shirts.flatMap((shirt) => hat + pant + shirt)))
+  ),
+];

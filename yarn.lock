@@ -1824,11 +1824,11 @@ eslint-config-prettier@^8.3.0:
   integrity sha512-SM8AMJdeQqRYT9O9zguiruQZaN7+z+E4eAP9oiLNGKMtomwaB1E9dcgUD6ZAn/eQAb52USbvezbiljfZUhbJcg==
 
 eslint-plugin-libram@^0.4.3:
-  version "0.4.5"
-  resolved "https://registry.npmjs.org/eslint-plugin-libram/-/eslint-plugin-libram-0.4.5.tgz"
-  integrity sha512-ST5J8liK4io73wraAnTGbf37wbLoNAUhgq7eyDPcX58zv5rI7zCGC8IxtRc18GIKE3dQf9CgZlcK9ZOrwsG6oA==
+  version "0.4.27"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-libram/-/eslint-plugin-libram-0.4.27.tgz#88b26a6d3cad3ffa2a6053d0c93295de5e240da0"
+  integrity sha512-y3Wj5go84NMfdNWAlvd2TklBb+XVK4tOyMtbXQXn8LqK/qtwuu5XLNw4XSVD8XHB2ujuABncwaViwPL79OtNbQ==
   dependencies:
-    html-entities "^2.4.0"
+    html-entities "^2.5.2"
     requireindex "~1.2.0"
 
 eslint-scope@5.1.1:
@@ -2153,11 +2153,6 @@ hasown@^2.0.0:
   integrity sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==
   dependencies:
     function-bind "^1.1.2"
-
-html-entities@^2.4.0:
-  version "2.5.2"
-  resolved "https://registry.npmjs.org/html-entities/-/html-entities-2.5.2.tgz"
-  integrity sha512-K//PSRMQk4FZ78Kyau+mZurHn3FH0Vwr+H36eE0rPbeYkRRi9YxceYPhuN60UwWorxyKHhqoAJl2OFKa4BVtaA==
 
 html-entities@^2.5.2:
   version "2.6.0"
@@ -2704,7 +2699,7 @@ require-from-string@^2.0.2:
 
 requireindex@~1.2.0:
   version "1.2.0"
-  resolved "https://registry.npmjs.org/requireindex/-/requireindex-1.2.0.tgz"
+  resolved "https://registry.yarnpkg.com/requireindex/-/requireindex-1.2.0.tgz#3463cdb22ee151902635aa6c9535d4de9c2ef1ef"
   integrity sha512-L9jEkOi3ASd9PYit2cwRfyppc9NoABujTP8/5gFcbERmo5jUoAKovIC3fsF17pkTnGsrByysqX+Kxd2OTNI1ww==
 
 resolve-cwd@^3.0.0:
