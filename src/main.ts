@@ -1,18 +1,13 @@
-
 import { Args } from "grimoire-kolmafia";
 import { findTopBusksFast, generateOne, printBuskResult } from "./utils";
 import { Modifier, print, toModifier } from "kolmafia";
 
-const args = Args.create(
-  "Beret Busk Tester",
-  'Be good, be kind',
-  {
-    modifiers: Args.string({
-      help: "Numeric Modifier to check",
-      default: "Meat Drop"
-    })
-  }
-)
+const args = Args.create("Beret Busk Tester", "Be good, be kind", {
+  modifiers: Args.string({
+    help: "Numeric Modifier to check",
+    default: "Meat Drop",
+  }),
+});
 
 function parseWeightedModifiers(input: string): [Modifier, number][] {
   return input
@@ -41,6 +36,11 @@ export function main(command?: string): void {
 
   const result = findTopBusksFast(generateOne, weightedModifiers);
 
-  print(`DEBUG: Parsed modifiers = ${weightedModifiers.map(([m, w]) => `${w}×${m.name}`).join(", ")}`);
-  printBuskResult(result, weightedModifiers.map(([m]) => m));
+  print(
+    `DEBUG: Parsed modifiers = ${weightedModifiers.map(([m, w]) => `${w}×${m.name}`).join(", ")}`
+  );
+  printBuskResult(
+    result,
+    weightedModifiers.map(([m]) => m)
+  );
 }
