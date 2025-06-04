@@ -155,11 +155,12 @@ export function findTopBusksFast(
   const allBusks = beretDASum.flatMap((daRaw) => {
     const da = daRaw / 5;
     const pow = da * 5;
+    const softcappedPow = pow > 11000 ? Math.floor(11000 + (pow - 11000) ** 0.8) : pow;
     const wzrd = Math.ceil(da / 20);
     return Array(5)
       .fill(null)
       .map((_, buskIndex) => {
-        const seed = pow + buskIndex;
+        const seed = softcappedPow + buskIndex;
         const raw = generateOne(seed, wzrd, false).map(([, eff]) => eff);
         const effects = Array.from(new Set(raw));
         const score = scoreBusk(effects, weightedModifiers);
