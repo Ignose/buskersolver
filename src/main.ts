@@ -1,7 +1,7 @@
 
 import { Args } from "grimoire-kolmafia";
 import { findTopBusksFast, generateOne, printBuskResult } from "./buskingtest2";
-import { NumericModifier, numericModifiers } from "libram";
+import { Modifier, print, toModifier } from "kolmafia";
 
 const args = Args.create(
   "Beret Busk Tester",
@@ -14,17 +14,21 @@ const args = Args.create(
   }
 )
 
-function toModifierArray(input: string): NumericModifier[] {
+function toModifierArray(input: string): Modifier[] {
   return input
     .split(",")
     .map((s) => s.trim())
-    .filter((s): s is NumericModifier => s in numericModifiers);
+    .map((s) => toModifier(s))
+    .filter((m): m is Modifier => m !== undefined && m !== null);
 }
 
-const modifier = toModifierArray(args.modifiers);
+export function main(command?: string): void {
+  Args.fill(args, command);
 
-const result = findTopBusksFast(generateOne, modifier);
+  const modifier = toModifierArray(args.modifiers);
 
-export function main(): void {
-  printBuskResult(result);
+  const result = findTopBusksFast(generateOne, modifier);
+
+  print(`DEBUG: Parsed modifiers = ${modifier.join(", ")}`);
+  printBuskResult(result, modifier);
 }

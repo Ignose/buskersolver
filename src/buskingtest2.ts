@@ -1,6 +1,6 @@
-import { Effect, getPower, Item, print, toEffect, toSlot } from "kolmafia";
+import { Effect, getPower, Item, Modifier, numericModifier, print, toEffect, toSlot } from "kolmafia";
 import { PHPMTRand } from "kol-rng";
-import { $effect, $effects, $familiar, $skill, $slot, getModifier, have, NumericModifier, sum } from "libram";
+import { $effect, $effects, $familiar, $skill, $slot, have } from "libram";
 
 const effects = [
   5, 10, 11, 12, 14, 16, 18, 19, 21, 22, 23, 24, 25, 26, 28, 30, 31, 32, 33, 34,
@@ -94,7 +94,7 @@ const effects = [
   2475, 2476, 2488, 2490, 2491, 2492, 2493, 2494, 2495, 2496, 2497, 2498, 2500,
   2501, 2502, 2503, 2504, 2505, 2506, 2507, 2508, 2518, 2519, 2525, 2526, 2527,
   2528, 2529, 2530, 2531, 2532, 2533, 2534, 2535, 2537, 2538, 2548, 2561, 2564,
-  2566, 2568, 2569, 2570, 2571, 2572, 2573, 2577, 2579, 2581, 2584, 2585, 2586,
+  2568, 2569, 2570, 2571, 2572, 2573, 2577, 2579, 2581, 2583, 2584, 2585, 2586,
   2587, 2596, 2598, 2599, 2600, 2601, 2602, 2623, 2624, 2626, 2627, 2629, 2677,
   2683, 2684, 2685, 2686, 2687, 2698, 2703, 2704, 2705, 2706, 2707, 2708, 2710,
   2711, 2713, 2714, 2715, 2717, 2718, 2719, 2724, 2725, 2726, 2727, 2746, 2747,
@@ -108,12 +108,24 @@ const effects = [
 
 type PickedEffect = [number, Effect];
 
+export function buildEffectMap(): Map<number, Effect> {
+  const map = new Map<number, Effect>();
+  for (const id of effects) {
+    map.set(id, toEffect(id));
+  }
+  return map;
+}
+
+const effectMap = buildEffectMap();
+
 export function pickEffects(rng: PHPMTRand, count: number): PickedEffect[] {
   const resp: PickedEffect[] = [];
   for (let i = 0; i < count; i++) {
     const roll = rng.roll(0, effects.length - 1);
-    const effect = toEffect(roll);
-    resp.push([roll, effect]);
+    const effect = effectMap.get(effects[roll]);
+    if (effect) {
+      resp.push([roll, effect]);
+    }
   }
   return resp;
 }
@@ -131,6 +143,7 @@ export interface Busk {
   da: number;
   effects: Effect[];
   score: number;
+  buskIndex: number;
 }
 
 export interface BuskResult {
@@ -139,27 +152,28 @@ export interface BuskResult {
 }
 
 // eslint-disable-next-line libram/verify-constants
-const uselessEffects = new Set($effects`Leash of Linguini, Empathy, Thoughtful Empathy, Billiards Belligerence, Blood Bond, Do I Know You From Somewhere?, Shortly Stacked, You Can Really Taste the Dormouse, Sigils of Yeg, The Magic of LOV`);
+const uselessEffects = new Set($effects`How to Scam Tourists, Leash of Linguini, Empathy, Thoughtful Empathy, Billiards Belligerence, Blood Bond, Do I Know You From Somewhere?, Shortly Stacked, You Can Really Taste the Dormouse, Sigils of Yeg, The Magic of LOV`);
 
-function scoreBusk(effects: Effect[], targets: NumericModifier[]): number {
+function scoreBusk(effects: Effect[], modifiers: Modifier[]): number {
   const usefulEffects = effects.filter((ef) => !uselessEffects.has(ef));
-  return usefulEffects.reduce((sumTotal, ef) => {
-    return (
-      sumTotal +
-      targets.reduce((modSum, mod) => modSum + getModifier(mod, ef), 0)
-    );
-  }, 0);
+
+  return modifiers.reduce(
+    (total, mod) =>
+      total + usefulEffects.reduce((sum, ef) => sum + numericModifier(ef, mod), 0),
+    0
+  );
 }
 
 export function findTopBusksFast(
   generateOne: (seed: number, count: number, print?: boolean) => [number, Effect][],
-  targets: NumericModifier[]
+  targets: Modifier[]
 ): BuskResult | null {
-  const allBusks = beretDASum.flatMap((da) => {
+  const allBusks = beretDASum.flatMap((daRaw) => {
+    const da = daRaw / 5;
     const pow = da * 5;
     const wzrd = Math.ceil(da / 20);
-    return Array(5).fill(null).map((_, busk) => {
-      const seed = pow + busk + 1;
+    return Array(5).fill(null).map((_, buskIndex) => {
+      const seed = pow + buskIndex;
       const raw = generateOne(seed, wzrd, false)
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         .map(([_, eff]) => eff)
@@ -167,43 +181,67 @@ export function findTopBusksFast(
 
       const effects = Array.from(new Set(raw));
       const score = scoreBusk(effects, targets);
-      return { seed, da, effects, score };
+      return { seed, da, effects, score, buskIndex: buskIndex };
     });
   });
 
-  const topBusks = allBusks.reduce<Busk[]>((bestFive, busk) => {
-    if (bestFive.length < 5) return [...bestFive, busk];
-    const beaten = bestFive.find(({ score }) => busk.score > score);
-    if (beaten) return [...bestFive.filter((entry) => entry !== beaten), busk];
-    return bestFive;
-  }, []);
+  // Group by buskIndex and pick best busk for each index
+  const bestBusksByIndex = new Map<number, Busk>();
+
+  for (const busk of allBusks) {
+    const existing = bestBusksByIndex.get(busk.buskIndex);
+    if (!existing || busk.score > existing.score) {
+      bestBusksByIndex.set(busk.buskIndex, busk);
+    }
+  }
+
+  const topBusks = Array.from(bestBusksByIndex.values());
 
   if (topBusks.length < 5) return null;
 
-  const totalScore = sum(topBusks, "score");
+  const totalScore = topBusks.reduce((sum, b) => sum + b.score, 0);
   return { score: totalScore, busks: topBusks };
 }
 
-export function printBuskResult(result: BuskResult | null): void {
+export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]): void {
   if (!result) {
     print("No result found.");
     return;
   }
 
   print(`Score: ${result.score}`);
-
   print("\nBusk Info:");
-  for (const { effects, da } of result.busks) {
-    const effectNames = effects.map(e => e.name).join(", ");
-    const famWt = sum(effects, (ef) => getModifier("Familiar Weight", ef));
-    const spellPct = sum(effects, (ef) => getModifier("Spell Damage Percent", ef));
 
-    print(`DA: ${da * 5}, Effects: ${effectNames}, Familiar Weight Modifier: ${famWt}, Spell Damage Percent Modifier: ${spellPct}`);
+  // Group busks by buskIndex and pick the best scoring busk per index
+  const bestBusksByIndex = new Map<number, Busk>();
+
+  for (const busk of result.busks) {
+    const existing = bestBusksByIndex.get(busk.buskIndex);
+    if (!existing || busk.score > existing.score) {
+      bestBusksByIndex.set(busk.buskIndex, busk);
+    }
+  }
+
+  // Get best busks sorted by buskIndex (Busk 1, 2, 3, 4, 5)
+  const bestBusks = Array.from(bestBusksByIndex.values()).sort(
+    (a, b) => a.buskIndex - b.buskIndex
+  );
+
+  for (const busk of bestBusks) {
+    const pow = busk.da * 5;
+    const effectNames = busk.effects.map((e) => e.name).join(", ");
+    const modifierValues = modifiers
+      .map((mod) => {
+        const total = busk.effects.reduce((sum, ef) => sum + numericModifier(ef, mod), 0);
+        return `${mod.name}: ${total}`;
+      })
+      .join(", ");
+    print(`DA ${pow} Busk ${busk.buskIndex + 1}, Effects: ${effectNames}, ${modifierValues}`);
   }
 
   print("\nExpected Unique Effects:");
   const uniqueEffects = new Map<number, Effect>();
-  for (const busk of result.busks) {
+  for (const busk of bestBusks) {
     for (const effect of busk.effects) {
       uniqueEffects.set(effect.id, effect);
     }
@@ -217,7 +255,7 @@ export function printBuskResult(result: BuskResult | null): void {
 const allItems = Item.all().filter((i) => have(i));
 const allHats = allItems.filter((i) => toSlot(i) === $slot`hat`);
 const allPants = allItems.filter((i) => toSlot(i) === $slot`pants`);
-const allShirts = allItems.filter((i) => toSlot(i) === $slot`torso`);
+const allShirts = allItems.filter((i) => toSlot(i) === $slot`shirt`);
 
 const hatPowers = [...new Set(allHats.map((i) => (have($skill`Tao of the Terrapin`) ? 2 : 1) * getPower(i)))];
 const hats = !have($familiar`Mad Hatrack`) ? [20] : hatPowers;
@@ -225,7 +263,7 @@ const hats = !have($familiar`Mad Hatrack`) ? [20] : hatPowers;
 const pants = [...new Set(allPants.map((i) => (have($skill`Tao of the Terrapin`) ? 2 : 1) * getPower(i)))];
 const shirts = [...new Set(allShirts.map((i) => (getPower(i))))];
 
-export const beretDASum: number[] = [];
+export let beretDASum: number[] = [];
 
 for (const a of hats) {
   for (const b of shirts) {
@@ -234,5 +272,7 @@ for (const a of hats) {
     }
   }
 }
+
+beretDASum = [...new Set(beretDASum)];
 
 
