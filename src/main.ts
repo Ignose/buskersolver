@@ -1,3 +1,4 @@
+
 import { Args } from "grimoire-kolmafia";
 import { findTopBusksFast, generateOne, printBuskResult } from "./buskingtest2";
 import { NumericModifier, numericModifiers } from "libram";
