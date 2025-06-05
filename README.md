@@ -10,16 +10,16 @@ Arguments:
 
 * modifiers:
     
-    help: Numeric Modifiers to check; these can be singular like modifiers="Meat Drop", multiple like modifiers="Meat Drop, Familiar Weight" or weighted like modifiers="5 Meat Drop, 10 Familiar Weight"
+    * help: Numeric Modifiers to check; these can be singular like modifiers="Meat Drop", multiple like modifiers="Meat Drop, Familiar Weight" or weighted like modifiers="5 Meat Drop, 10 Familiar Weight"
     
-    default: "Meat Drop"
+    * default: "Meat Drop"
 
     
 * uselesseffects:
    
-    help: Effects that aren't helpful for you, for instance uselesseffects="Leash of Linguini, Empathy, Thoughtful Empathy"
+    * help: Effects that aren't helpful for you, for instance uselesseffects="Leash of Linguini, Empathy, Thoughtful Empathy"
     
-    default: ""
+    * default: ""
 
 
 This script is a work in progress. Beware bugs!
