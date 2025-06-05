@@ -1,7 +1,7 @@
 import { Args } from "grimoire-kolmafia";
-import { findTopBusksFast, generateOne, printBuskResult } from "./utils";
+import { findTopBusksFast, printBuskResult } from "./utils";
 import { Effect, Modifier, print, toEffect, toModifier } from "kolmafia";
-import { $effects } from "libram";
+import { $effects, sinceKolmafiaRevision } from "libram";
 
 export const args = Args.create("Beret Busk Tester", "Be good, be kind", {
   modifiers: Args.string({
@@ -43,6 +43,7 @@ function parseEffects(input: string): Effect[] {
 }
 
 export function main(command?: string): void {
+  sinceKolmafiaRevision(28549);
   Args.fill(args, command);
 
   if (args.help) {
@@ -53,7 +54,7 @@ export function main(command?: string): void {
   const weightedModifiers = parseWeightedModifiers(args.modifiers);
   const uselesseffects = parseEffects(args.uselesseffects);
 
-  const result = findTopBusksFast(generateOne, weightedModifiers, uselesseffects);
+  const result = findTopBusksFast(weightedModifiers, uselesseffects);
 
   print(
     `DEBUG: Parsed modifiers = ${weightedModifiers.map(([m, w]) => `${w}×${m.name}`).join(", ")}`
