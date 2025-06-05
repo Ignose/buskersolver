@@ -619,6 +619,7 @@ __webpack_require__.r(__webpack_exports__);
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
+  args: () => (/* binding */ args),
   main: () => (/* binding */ main)
 });
 
@@ -7369,13 +7370,11 @@ function generateOne(seed, effectCount) {
   var buskEffects = pickEffects(rng, effectCount);
   return buskEffects;
 }
-var uselessEffects = new Set($effects(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["How to Scam Tourists, Leash of Linguini, Empathy, Thoughtful Empathy, Billiards Belligerence, Blood Bond, Do I Know You From Somewhere?, Shortly Stacked, You Can Really Taste the Dormouse, Sigils of Yeg, The Magic of LOV"]))));
-
 // eslint-disable-next-line libram/verify-constants
-var beret = template_string_$item(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["prismatic beret"])));
-var taoMultiplier = have(template_string_$skill(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
-function scoreBusk(effects, weightedModifiers) {
-  var usefulEffects = effects.filter(ef => !uselessEffects.has(ef));
+var beret = template_string_$item(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["prismatic beret"])));
+var taoMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
+function scoreBusk(effects, weightedModifiers, uselessEffects) {
+  var usefulEffects = effects.filter(ef => !uselessEffects.includes(ef));
   return sum(weightedModifiers, _ref3 => {
     var _ref4 = utils_slicedToArray(_ref3, 2),
       modifier = _ref4[0],
@@ -7383,7 +7382,7 @@ function scoreBusk(effects, weightedModifiers) {
     return weight * sum(usefulEffects, ef => (0,external_kolmafia_namespaceObject.numericModifier)(ef, modifier));
   });
 }
-function findTopBusksFast(generateOne, weightedModifiers) {
+function findTopBusksFast(generateOne, weightedModifiers, uselessEffects) {
   var allBusks = beretDASum.flatMap(daRaw => {
     var da = daRaw / 5;
     var pow = da * 5;
@@ -7397,7 +7396,7 @@ function findTopBusksFast(generateOne, weightedModifiers) {
         return eff;
       });
       var effects = Array.from(new Set(raw));
-      var score = scoreBusk(effects, weightedModifiers);
+      var score = scoreBusk(effects, weightedModifiers, uselessEffects);
       return {
         seed: seed,
         da: da,
@@ -7437,7 +7436,7 @@ function reconstructOutfit(da) {
   try {
     for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
       var hat = _step2.value;
-      var hatPower = have(template_string_$skill(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 * (0,external_kolmafia_namespaceObject.getPower)(hat) : (0,external_kolmafia_namespaceObject.getPower)(hat);
+      var hatPower = have(template_string_$skill(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(hat) : (0,external_kolmafia_namespaceObject.getPower)(hat);
       var _iterator3 = src_utils_createForOfIteratorHelper(allShirts),
         _step3;
       try {
@@ -7449,7 +7448,7 @@ function reconstructOutfit(da) {
           try {
             for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
               var _pants = _step4.value;
-              var pantsPower = (0,external_kolmafia_namespaceObject.getPower)(_pants);
+              var pantsPower = have(template_string_$skill(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(_pants) : (0,external_kolmafia_namespaceObject.getPower)(_pants);
               if (shirtPower + taoMultiplier * (hatPower + pantsPower) === da) {
                 return {
                   hat: hat,
@@ -7542,6 +7541,8 @@ var pants = utils_toConsumableArray(new Set(allPants.map(i => taoMultiplier * (0
 var shirts = utils_toConsumableArray(new Set(allShirts.map(i => (0,external_kolmafia_namespaceObject.getPower)(i))));
 var beretDASum = utils_toConsumableArray(new Set(hats.flatMap(hat => pants.flatMap(pant => shirts.flatMap(shirt => hat + pant + shirt)))));
 ;// ./src/main.ts
+var main_templateObject;
+function main_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 function main_slicedToArray(arr, i) { return main_arrayWithHoles(arr) || main_iterableToArrayLimit(arr, i) || main_unsupportedIterableToArray(arr, i) || main_nonIterableRest(); }
 function main_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function main_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return main_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return main_arrayLikeToArray(o, minLen); }
@@ -7551,10 +7552,19 @@ function main_arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 
+
 var args = Args.create("Beret Busk Tester", "Be good, be kind", {
+  help: Args.boolean({
+    help: "What do you mean, I am help?",
+    default: false
+  }),
   modifiers: Args.string({
-    help: "Numeric Modifier to check",
+    help: "Numeric Modifiers to check; these can be singular like modifiers=\"Meat Drop\", multiple like modifiers=\"Meat Drop, Familiar Weight\" or weighted like modifiers=\"5 Meat Drop, 10 Familiar Weight\"",
     default: "Meat Drop"
+  }),
+  uselesseffects: Args.string({
+    help: "Effects that aren't helpful for you, for instance uselesseffects=\"Leash of Linguini, Empathy, Thoughtful Empathy\"",
+    default: ""
   })
 });
 function parseWeightedModifiers(input) {
@@ -7574,10 +7584,19 @@ function parseWeightedModifiers(input) {
     return null;
   }).filter(m => m !== null);
 }
+function parseEffects(input) {
+  var effectList = input.split(",").map(entry => (0,external_kolmafia_namespaceObject.toEffect)(entry.trim())).filter(e => e !== null); // Remove invalid entries
+  return effectList.length > 0 ? effectList : $effects(main_templateObject || (main_templateObject = main_taggedTemplateLiteral([""])));
+}
 function main(command) {
   Args.fill(args, command);
+  if (args.help) {
+    Args.showHelp(args);
+    return;
+  }
   var weightedModifiers = parseWeightedModifiers(args.modifiers);
-  var result = findTopBusksFast(generateOne, weightedModifiers);
+  var uselesseffects = parseEffects(args.uselesseffects);
+  var result = findTopBusksFast(generateOne, weightedModifiers, uselesseffects);
   (0,external_kolmafia_namespaceObject.print)("DEBUG: Parsed modifiers = ".concat(weightedModifiers.map(_ref => {
     var _ref2 = main_slicedToArray(_ref, 2),
       m = _ref2[0],
