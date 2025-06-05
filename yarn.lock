@@ -2337,9 +2337,9 @@ kol-rng@^2.0.0:
     mersenne-twister "^1.1.0"
 
 kolmafia@>=1.2.0:
-  version "5.28548.0"
-  resolved "https://registry.npmjs.org/kolmafia/-/kolmafia-5.28548.0.tgz"
-  integrity sha512-xscH7Irj6zNeElT/se4pbKwEVUPZPAayCsBqSGF3oTSkZ1xEgKwmmu1XVbUtDdZUkXCSuSz451OvdU/gJGX3FA==
+  version "5.28549.0"
+  resolved "https://registry.yarnpkg.com/kolmafia/-/kolmafia-5.28549.0.tgz#ac5611280af93605c7d9b84e3da8a8ca7db86484"
+  integrity sha512-cQy6jVquX8ccOltnleeWiiSrkjNYHz7K2eVeQD+V/zRFl0SpKWZ7qwM9+pXS/Og4a7X4LRN5drItJ2CjH1DWxQ==
 
 levn@^0.4.1:
   version "0.4.1"
