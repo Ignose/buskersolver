@@ -15,7 +15,7 @@ export const args = Args.create("Beret Busk Tester", "Be good, be kind", {
   uselesseffects: Args.string({
     help: `Effects that aren't helpful for you, for instance uselesseffects="Leash of Linguini, Empathy, Thoughtful Empathy"`,
     default: "",
-  })
+  }),
 });
 
 function parseWeightedModifiers(input: string): [Modifier, number][] {
@@ -49,7 +49,7 @@ function parseEffects(input: string): Effect[] {
 export function main(command?: string): void {
   Args.fill(args, command);
 
-  if(args.help) {
+  if (args.help) {
     Args.showHelp(args);
     return;
   }

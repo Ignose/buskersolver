@@ -135,7 +135,11 @@ export interface BuskResult {
 const beret = $item`prismatic beret`;
 const taoMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
 
-function scoreBusk(effects: Effect[], weightedModifiers: [Modifier, number][], uselessEffects: Effect[]): number {
+function scoreBusk(
+  effects: Effect[],
+  weightedModifiers: [Modifier, number][],
+  uselessEffects: Effect[]
+): number {
   const usefulEffects = effects.filter((ef) => !uselessEffects.includes(ef));
 
   return sum(
@@ -183,11 +187,15 @@ export function findTopBusksFast(
 
 function reconstructOutfit(da: number): { hat?: Item; shirt?: Item; pants?: Item } {
   for (const hat of allHats) {
-    const hatPower = have($skill`Tao of the Terrapin`) ? taoMultiplier * getPower(hat) : getPower(hat);
+    const hatPower = have($skill`Tao of the Terrapin`)
+      ? taoMultiplier * getPower(hat)
+      : getPower(hat);
     for (const shirt of allShirts) {
       const shirtPower = getPower(shirt);
       for (const pants of allPants) {
-        const pantsPower = have($skill`Tao of the Terrapin`) ? taoMultiplier * getPower(pants) : getPower(pants);
+        const pantsPower = have($skill`Tao of the Terrapin`)
+          ? taoMultiplier * getPower(pants)
+          : getPower(pants);
         if (shirtPower + taoMultiplier * (hatPower + pantsPower) === da) {
           return { hat, shirt, pants };
         }
