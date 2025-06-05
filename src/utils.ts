@@ -7,9 +7,11 @@ import {
   numericModifier,
   print,
   toEffect,
+  toInt,
   toSlot,
 } from "kolmafia";
-import { $familiar, $item, $skill, $slot, have, sum } from "libram";
+import { $familiar, $item, $skill, $slot, clamp, get, have, sum } from "libram";
+import { args } from "./main";
 
 export interface Busk {
   effects: Effect[];
@@ -44,10 +46,13 @@ export function findTopBusksFast(
   weightedModifiers: [Modifier, number][],
   uselessEffects: Effect[]
 ): BuskResult | null {
+  const BUSKNUM = args.allbusks ? 5 : clamp(5 - toInt(get("_beretBuskingUses")), 0, 5);
+  const startBuskIndex = 5 - BUSKNUM;
   const allBusks = beretDASum.flatMap((daRaw) => {
-    return Array(5)
+    return Array(BUSKNUM)
       .fill(null)
-      .map((_, buskIndex) => {
+      .map((_, i) => {
+        const buskIndex = startBuskIndex + i;
         const rawEffects = beretBuskingEffects(daRaw, buskIndex);
         const effects: Effect[] = Array.from(
           new Set(
@@ -77,8 +82,6 @@ export function findTopBusksFast(
   }
 
   const topBusks = Array.from(bestBusksByIndex.values());
-
-  if (topBusks.length < 5) return null;
 
   const totalScore = sum(topBusks, "score");
   return { score: totalScore, busks: topBusks };

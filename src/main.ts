@@ -12,6 +12,10 @@ export const args = Args.create("Beret Busk Tester", "Be good, be kind", {
     help: `Effects that aren't helpful for you, for instance uselesseffects="Leash of Linguini, Empathy, Thoughtful Empathy"`,
     default: "",
   }),
+  allbusks: Args.boolean({
+    help: `Set allbusks to "true" to check all busk levels; default behavior is only to test available busks`,
+    default: false,
+  }),
 });
 
 function parseWeightedModifiers(input: string): [Modifier, number][] {
