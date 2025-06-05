@@ -132,6 +132,7 @@ export interface BuskResult {
 }
 
 const uselessEffects = new Set(
+  // eslint-disable-next-line libram/verify-constants
   $effects`How to Scam Tourists, Leash of Linguini, Empathy, Thoughtful Empathy, Billiards Belligerence, Blood Bond, Do I Know You From Somewhere?, Shortly Stacked, You Can Really Taste the Dormouse, Sigils of Yeg, The Magic of LOV`
 );
 
@@ -186,11 +187,11 @@ export function findTopBusksFast(
 
 function reconstructOutfit(da: number): { hat?: Item; shirt?: Item; pants?: Item } {
   for (const hat of allHats) {
-    const hatPower = have($skill`Tao of the Terrapin`) ? 2 * getPower(hat) : getPower(hat);
+    const hatPower = have($skill`Tao of the Terrapin`) ? taoMultiplier * getPower(hat) : getPower(hat);
     for (const shirt of allShirts) {
       const shirtPower = getPower(shirt);
       for (const pants of allPants) {
-        const pantsPower = getPower(pants);
+        const pantsPower = have($skill`Tao of the Terrapin`) ? taoMultiplier * getPower(pants) : getPower(pants);
         if (shirtPower + taoMultiplier * (hatPower + pantsPower) === da) {
           return { hat, shirt, pants };
         }
