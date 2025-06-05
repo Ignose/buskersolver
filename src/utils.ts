@@ -9,7 +9,7 @@ import {
   toSlot,
 } from "kolmafia";
 import { PHPMTRand } from "kol-rng";
-import { $effects, $familiar, $item, $skill, $slot, have, sum } from "libram";
+import { $familiar, $item, $skill, $slot, have, sum } from "libram";
 
 const effects = [
   5, 10, 11, 12, 14, 16, 18, 19, 21, 22, 23, 24, 25, 26, 28, 30, 31, 32, 33, 34, 35, 36, 38, 46, 48,
@@ -131,17 +131,12 @@ export interface BuskResult {
   busks: Busk[];
 }
 
-const uselessEffects = new Set(
-  // eslint-disable-next-line libram/verify-constants
-  $effects`How to Scam Tourists, Leash of Linguini, Empathy, Thoughtful Empathy, Billiards Belligerence, Blood Bond, Do I Know You From Somewhere?, Shortly Stacked, You Can Really Taste the Dormouse, Sigils of Yeg, The Magic of LOV`
-);
-
 // eslint-disable-next-line libram/verify-constants
 const beret = $item`prismatic beret`;
 const taoMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
 
-function scoreBusk(effects: Effect[], weightedModifiers: [Modifier, number][]): number {
-  const usefulEffects = effects.filter((ef) => !uselessEffects.has(ef));
+function scoreBusk(effects: Effect[], weightedModifiers: [Modifier, number][], uselessEffects: Effect[]): number {
+  const usefulEffects = effects.filter((ef) => !uselessEffects.includes(ef));
 
   return sum(
     weightedModifiers,
@@ -151,7 +146,8 @@ function scoreBusk(effects: Effect[], weightedModifiers: [Modifier, number][]): 
 
 export function findTopBusksFast(
   generateOne: (seed: number, count: number, print?: boolean) => [number, Effect][],
-  weightedModifiers: [Modifier, number][]
+  weightedModifiers: [Modifier, number][],
+  uselessEffects: Effect[]
 ): BuskResult | null {
   const allBusks = beretDASum.flatMap((daRaw) => {
     const da = daRaw / 5;
@@ -164,7 +160,7 @@ export function findTopBusksFast(
         const seed = softcappedPow + buskIndex;
         const raw = generateOne(seed, wzrd, false).map(([, eff]) => eff);
         const effects = Array.from(new Set(raw));
-        const score = scoreBusk(effects, weightedModifiers);
+        const score = scoreBusk(effects, weightedModifiers, uselessEffects);
         return { seed, da, effects, score, buskIndex };
       });
   });
