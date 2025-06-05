@@ -4,10 +4,6 @@ import { Effect, Modifier, print, toEffect, toModifier } from "kolmafia";
 import { $effects } from "libram";
 
 export const args = Args.create("Beret Busk Tester", "Be good, be kind", {
-  help: Args.boolean({
-    help: "What do you mean, I am help?",
-    default: false,
-  }),
   modifiers: Args.string({
     help: `Numeric Modifiers to check; these can be singular like modifiers="Meat Drop", multiple like modifiers="Meat Drop, Familiar Weight" or weighted like modifiers="5 Meat Drop, 10 Familiar Weight"`,
     default: "Meat Drop",
