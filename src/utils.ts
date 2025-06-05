@@ -196,7 +196,7 @@ function reconstructOutfit(da: number): { hat?: Item; shirt?: Item; pants?: Item
         const pantsPower = have($skill`Tao of the Terrapin`)
           ? taoMultiplier * getPower(pants)
           : getPower(pants);
-        if (shirtPower + taoMultiplier * (hatPower + pantsPower) === da) {
+        if (shirtPower + hatPower + pantsPower === da) {
           return { hat, shirt, pants };
         }
       }
