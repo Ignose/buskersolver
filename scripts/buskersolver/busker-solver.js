@@ -7449,7 +7449,7 @@ function reconstructOutfit(da) {
             for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
               var _pants = _step4.value;
               var pantsPower = have(template_string_$skill(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(_pants) : (0,external_kolmafia_namespaceObject.getPower)(_pants);
-              if (shirtPower + taoMultiplier * (hatPower + pantsPower) === da) {
+              if (shirtPower + hatPower + pantsPower === da) {
                 return {
                   hat: hat,
                   shirt: shirt,
