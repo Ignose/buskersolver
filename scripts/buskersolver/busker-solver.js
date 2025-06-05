@@ -1,584 +1,7 @@
 /******/ (() => { // webpackBootstrap
-/******/ 	var __webpack_modules__ = ({
-
-/***/ 5:
-/***/ ((module) => {
-
-/*
-  https://github.com/banksean wrapped Makoto Matsumoto and Takuji Nishimura's code in a namespace
-  so it's better encapsulated. Now you can have multiple random number generators
-  and they won't stomp all over eachother's state.
-
-  If you want to use this as a substitute for Math.random(), use the random()
-  method like so:
-
-  var m = new MersenneTwister();
-  var randomNumber = m.random();
-
-  You can also call the other genrand_{foo}() methods on the instance.
-
-  If you want to use a specific seed in order to get a repeatable random
-  sequence, pass an integer into the constructor:
-
-  var m = new MersenneTwister(123);
-
-  and that will always produce the same random sequence.
-
-  Sean McCullough (banksean@gmail.com)
-*/
-
-/*
-   A C-program for MT19937, with initialization improved 2002/1/26.
-   Coded by Takuji Nishimura and Makoto Matsumoto.
-
-   Before using, initialize the state by using init_seed(seed)
-   or init_by_array(init_key, key_length).
-
-   Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
-   All rights reserved.
-
-   Redistribution and use in source and binary forms, with or without
-   modification, are permitted provided that the following conditions
-   are met:
-
-     1. Redistributions of source code must retain the above copyright
-        notice, this list of conditions and the following disclaimer.
-
-     2. Redistributions in binary form must reproduce the above copyright
-        notice, this list of conditions and the following disclaimer in the
-        documentation and/or other materials provided with the distribution.
-
-     3. The names of its contributors may not be used to endorse or promote
-        products derived from this software without specific prior written
-        permission.
-
-   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-   Any feedback is very welcome.
-   http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
-   email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
-*/
-
-var MersenneTwister = function MersenneTwister(seed) {
-  if (seed == undefined) {
-    seed = new Date().getTime();
-  }
-
-  /* Period parameters */
-  this.N = 624;
-  this.M = 397;
-  this.MATRIX_A = 0x9908b0df; /* constant vector a */
-  this.UPPER_MASK = 0x80000000; /* most significant w-r bits */
-  this.LOWER_MASK = 0x7fffffff; /* least significant r bits */
-
-  this.mt = new Array(this.N); /* the array for the state vector */
-  this.mti = this.N + 1; /* mti==N+1 means mt[N] is not initialized */
-
-  if (seed.constructor == Array) {
-    this.init_by_array(seed, seed.length);
-  } else {
-    this.init_seed(seed);
-  }
-};
-
-/* initializes mt[N] with a seed */
-/* origin name init_genrand */
-MersenneTwister.prototype.init_seed = function (s) {
-  this.mt[0] = s >>> 0;
-  for (this.mti = 1; this.mti < this.N; this.mti++) {
-    var s = this.mt[this.mti - 1] ^ this.mt[this.mti - 1] >>> 30;
-    this.mt[this.mti] = (((s & 0xffff0000) >>> 16) * 1812433253 << 16) + (s & 0x0000ffff) * 1812433253 + this.mti;
-    /* See Knuth TAOCP Vol2. 3rd Ed. P.106 for multiplier. */
-    /* In the previous versions, MSBs of the seed affect   */
-    /* only MSBs of the array mt[].                        */
-    /* 2002/01/09 modified by Makoto Matsumoto             */
-    this.mt[this.mti] >>>= 0;
-    /* for >32 bit machines */
-  }
-};
-
-/* initialize by an array with array-length */
-/* init_key is the array for initializing keys */
-/* key_length is its length */
-/* slight change for C++, 2004/2/26 */
-MersenneTwister.prototype.init_by_array = function (init_key, key_length) {
-  var i, j, k;
-  this.init_seed(19650218);
-  i = 1;
-  j = 0;
-  k = this.N > key_length ? this.N : key_length;
-  for (; k; k--) {
-    var s = this.mt[i - 1] ^ this.mt[i - 1] >>> 30;
-    this.mt[i] = (this.mt[i] ^ (((s & 0xffff0000) >>> 16) * 1664525 << 16) + (s & 0x0000ffff) * 1664525) + init_key[j] + j; /* non linear */
-    this.mt[i] >>>= 0; /* for WORDSIZE > 32 machines */
-    i++;
-    j++;
-    if (i >= this.N) {
-      this.mt[0] = this.mt[this.N - 1];
-      i = 1;
-    }
-    if (j >= key_length) j = 0;
-  }
-  for (k = this.N - 1; k; k--) {
-    var s = this.mt[i - 1] ^ this.mt[i - 1] >>> 30;
-    this.mt[i] = (this.mt[i] ^ (((s & 0xffff0000) >>> 16) * 1566083941 << 16) + (s & 0x0000ffff) * 1566083941) - i; /* non linear */
-    this.mt[i] >>>= 0; /* for WORDSIZE > 32 machines */
-    i++;
-    if (i >= this.N) {
-      this.mt[0] = this.mt[this.N - 1];
-      i = 1;
-    }
-  }
-  this.mt[0] = 0x80000000; /* MSB is 1; assuring non-zero initial array */
-};
-
-/* generates a random number on [0,0xffffffff]-interval */
-/* origin name genrand_int32 */
-MersenneTwister.prototype.random_int = function () {
-  var y;
-  var mag01 = new Array(0x0, this.MATRIX_A);
-  /* mag01[x] = x * MATRIX_A  for x=0,1 */
-
-  if (this.mti >= this.N) {
-    /* generate N words at one time */
-    var kk;
-    if (this.mti == this.N + 1) /* if init_seed() has not been called, */
-      this.init_seed(5489); /* a default initial seed is used */
-
-    for (kk = 0; kk < this.N - this.M; kk++) {
-      y = this.mt[kk] & this.UPPER_MASK | this.mt[kk + 1] & this.LOWER_MASK;
-      this.mt[kk] = this.mt[kk + this.M] ^ y >>> 1 ^ mag01[y & 0x1];
-    }
-    for (; kk < this.N - 1; kk++) {
-      y = this.mt[kk] & this.UPPER_MASK | this.mt[kk + 1] & this.LOWER_MASK;
-      this.mt[kk] = this.mt[kk + (this.M - this.N)] ^ y >>> 1 ^ mag01[y & 0x1];
-    }
-    y = this.mt[this.N - 1] & this.UPPER_MASK | this.mt[0] & this.LOWER_MASK;
-    this.mt[this.N - 1] = this.mt[this.M - 1] ^ y >>> 1 ^ mag01[y & 0x1];
-    this.mti = 0;
-  }
-  y = this.mt[this.mti++];
-
-  /* Tempering */
-  y ^= y >>> 11;
-  y ^= y << 7 & 0x9d2c5680;
-  y ^= y << 15 & 0xefc60000;
-  y ^= y >>> 18;
-  return y >>> 0;
-};
-
-/* generates a random number on [0,0x7fffffff]-interval */
-/* origin name genrand_int31 */
-MersenneTwister.prototype.random_int31 = function () {
-  return this.random_int() >>> 1;
-};
-
-/* generates a random number on [0,1]-real-interval */
-/* origin name genrand_real1 */
-MersenneTwister.prototype.random_incl = function () {
-  return this.random_int() * (1.0 / 4294967295.0);
-  /* divided by 2^32-1 */
-};
-
-/* generates a random number on [0,1)-real-interval */
-MersenneTwister.prototype.random = function () {
-  return this.random_int() * (1.0 / 4294967296.0);
-  /* divided by 2^32 */
-};
-
-/* generates a random number on (0,1)-real-interval */
-/* origin name genrand_real3 */
-MersenneTwister.prototype.random_excl = function () {
-  return (this.random_int() + 0.5) * (1.0 / 4294967296.0);
-  /* divided by 2^32 */
-};
-
-/* generates a random number on [0,1) with 53-bit resolution*/
-/* origin name genrand_res53 */
-MersenneTwister.prototype.random_long = function () {
-  var a = this.random_int() >>> 5,
-    b = this.random_int() >>> 6;
-  return (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-};
-
-/* These real versions are due to Isaku Wada, 2002/01/09 added */
-
-module.exports = MersenneTwister;
-
-/***/ }),
-
-/***/ 472:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-exports.PHPRand = void 0;
-var util_1 = __webpack_require__(487);
-var PHPRand = /*#__PURE__*/function () {
-  function PHPRand(seed) {
-    _classCallCheck(this, PHPRand);
-    this.state = [];
-    this.state.push(seed);
-    for (var i = 1; i < 31; i++) {
-      var value = 16807 * this.state[i - 1] % util_1.INTEGER_MAX;
-      if (value < 0) {
-        value += util_1.INTEGER_MAX;
-      }
-      this.state.push(value);
-    }
-    for (var _i = 31; _i < 34; _i++) {
-      this.state.push(this.state[_i - 31]);
-    }
-    for (var _i2 = 34; _i2 < 344; _i2++) {
-      this.next();
-    }
-  }
-  return _createClass(PHPRand, [{
-    key: "next",
-    value: function next() {
-      var i = this.state.length;
-      var value = this.state[i - 31] + this.state[i - 3] | 0;
-      this.state.push(value);
-      return value >>> 1;
-    }
-    /**
-     * @returns Random integer between 0 and integer max
-     */
-  }, {
-    key: "random",
-    value: function random() {
-      return this.next() / (util_1.INTEGER_MAX + 1);
-    }
-    /**
-     * @param min Minimum value
-     * @param max Maximum value
-     * @returns Rolled value
-     */
-  }, {
-    key: "roll",
-    value: function roll(min, max) {
-      return (0, util_1.bound)(min, max, this.random());
-    }
-    /**
-     * Picks a specified quantity of items from an array
-     *
-     * @param array Array from which to pick
-     * @param quantity Number of items to pick
-     * @returns Array of picked items
-     */
-  }, {
-    key: "pick",
-    value: function pick(array, quantity) {
-      var required = Math.min(quantity, array.length);
-      var chosen = [];
-      var _iterator = _createForOfIteratorHelper(array.entries()),
-        _step;
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var _step$value = _slicedToArray(_step.value, 2),
-            i = _step$value[0],
-            item = _step$value[1];
-          var chance = (required - chosen.length) / (array.length - i);
-          if (this.random() < chance) {
-            chosen.push(item);
-            if (chosen.length >= required) break;
-          }
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-      return chosen;
-    }
-    /**
-     * Shuffles array in place
-     *
-     * @param array Array to shuffle
-     * @returns Shuffled array
-     */
-  }, {
-    key: "shuffle",
-    value: function shuffle(array) {
-      for (var i = array.length - 1; i > 0; i--) {
-        var r = this.roll(0, i);
-        if (r === i) continue;
-        var temp = array[i];
-        array[i] = array[r];
-        array[r] = temp;
-      }
-      return array;
-    }
-  }]);
-}();
-exports.PHPRand = PHPRand;
-
-/***/ }),
-
-/***/ 487:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-exports.bound = exports.INTEGER_MAX = void 0;
-exports.INTEGER_MAX = 2147483647;
-var bound = (min, max, fraction) => Math.floor(min + (max - min + 1) * fraction);
-exports.bound = bound;
-
-/***/ }),
-
-/***/ 506:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-exports.RNG = void 0;
-var PHPMTRand_1 = __webpack_require__(833);
-var PHPRand_1 = __webpack_require__(472);
-var RNG = /*#__PURE__*/function () {
-  function RNG(seed) {
-    _classCallCheck(this, RNG);
-    this.rand = new PHPRand_1.PHPRand(seed);
-    this.mtRand = new PHPMTRand_1.PHPMTRand(seed);
-  }
-  return _createClass(RNG, [{
-    key: "roll",
-    value: function roll(a, b) {
-      var _ref = b ? [a, b] : [1, a],
-        _ref2 = _slicedToArray(_ref, 2),
-        min = _ref2[0],
-        max = _ref2[1];
-      return this.mtRand.roll(min, max);
-    }
-    /**
-     * Picks a single item from an array (replicating KoL's `pickone` function, which uses PHP 5.3's `mt_rand`)
-     *
-     * @param array Array to pick from
-     * @returns Picked item
-     */
-  }, {
-    key: "pickOne",
-    value: function pickOne(array) {
-      return array[this.roll(array.length) - 1];
-    }
-    /**
-     * Picks n items from an array (replicating PHP 5.3 `array_rand`). If quantity is 1, shortcuts to `pickOne`.
-     *
-     * @param array Array to pick from
-     * @param quantity Quantity to pick
-     * @returns Array of picked items (or sin)
-     */
-  }, {
-    key: "pick",
-    value: function pick(array, quantity) {
-      if (quantity == 1) return [this.pickOne(array)];
-      return this.rand.pick(array, quantity);
-    }
-    /**
-     * Shuffle an array in place (replicating PHP 5.3 `shuffle`)
-     * @param array Array to shuffle
-     * @returns Shuffled array
-     */
-  }, {
-    key: "shuffle",
-    value: function shuffle(array) {
-      return this.rand.shuffle(array);
-    }
-  }]);
-}();
-exports.RNG = RNG;
-
-/***/ }),
-
-/***/ 567:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-var __webpack_unused_export__;
-
-
-__webpack_unused_export__ = ({
-  value: true
-});
-exports.N = __webpack_unused_export__ = void 0;
-var PHPMTRand_1 = __webpack_require__(833);
-Object.defineProperty(exports, "N", ({
-  enumerable: true,
-  get: function get() {
-    return PHPMTRand_1.PHPMTRand;
-  }
-}));
-var PHPRand_1 = __webpack_require__(472);
-__webpack_unused_export__ = ({
-  enumerable: true,
-  get: function get() {
-    return PHPRand_1.PHPRand;
-  }
-});
-var RNG_1 = __webpack_require__(506);
-__webpack_unused_export__ = RNG_1.RNG;
-
-/***/ }),
-
-/***/ 833:
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-exports.PHPMTRand = void 0;
-var mersenne_twister_1 = __importDefault(__webpack_require__(5));
-var util_1 = __webpack_require__(487);
-/**
- * Monkeypatched random_int function for MersenneTwister to replica PHP 5.3.10's bad implementation.
- *
- * The change is that during the `twist` function that is repeated 3 times here, instead of raising
- * the new state value to the power of `mag01[y & 0x1]` at the end, we raise it to `((0xFFFFFFFF * (<CURRENT ITEM IN STATE> & 0x1)) & this.MATRIX_A)`.
- *
- * Because this twist function is not implemented seperately, it is necessary to monkeypatch the entire function.
- */
-mersenne_twister_1.default.prototype.random_int = function () {
-  var y;
-  var mag01 = new Array(0x0, this.MATRIX_A);
-  /* mag01[x] = x * MATRIX_A  for x=0,1 */
-  if (this.mti >= this.N) {
-    /* generate N words at one time */
-    var kk;
-    if (this.mti == this.N + 1) /* if init_seed() has not been called, */
-      this.init_seed(5489); /* a default initial seed is used */
-    for (kk = 0; kk < this.N - this.M; kk++) {
-      y = this.mt[kk] & this.UPPER_MASK | this.mt[kk + 1] & this.LOWER_MASK;
-      this.mt[kk] = this.mt[kk + this.M] ^ y >>> 1 ^ 0xffffffff * (this.mt[kk] & 0x1) & this.MATRIX_A;
-    }
-    for (; kk < this.N - 1; kk++) {
-      y = this.mt[kk] & this.UPPER_MASK | this.mt[kk + 1] & this.LOWER_MASK;
-      this.mt[kk] = this.mt[kk + (this.M - this.N)] ^ y >>> 1 ^ 0xffffffff * (this.mt[kk] & 0x1) & this.MATRIX_A;
-    }
-    y = this.mt[this.N - 1] & this.UPPER_MASK | this.mt[0] & this.LOWER_MASK;
-    this.mt[this.N - 1] = this.mt[this.M - 1] ^ y >>> 1 ^ 0xffffffff * (this.mt[this.N - 1] & 0x1) & this.MATRIX_A;
-    this.mti = 0;
-  }
-  y = this.mt[this.mti++];
-  /* Tempering */
-  y ^= y >>> 11;
-  y ^= y << 7 & 0x9d2c5680;
-  y ^= y << 15 & 0xefc60000;
-  y ^= y >>> 18;
-  return y >>> 0;
-};
-var PHPMTRand = /*#__PURE__*/function () {
-  function PHPMTRand(seed) {
-    _classCallCheck(this, PHPMTRand);
-    this.mt = new mersenne_twister_1.default(seed);
-  }
-  /**
-   * @returns Random integer between 0 and integer max
-   */
-  return _createClass(PHPMTRand, [{
-    key: "random",
-    value: function random() {
-      return this.mt.random();
-    }
-    /**
-     * @param min Minimum value
-     * @param max Maximum value
-     * @returns Rolled value
-     */
-  }, {
-    key: "roll",
-    value: function roll(min, max) {
-      return (0, util_1.bound)(min, max, this.random());
-    }
-  }]);
-}();
-exports.PHPMTRand = PHPMTRand;
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
+/******/ 	"use strict";
+/******/ 	// The require scope
+/******/ 	var __webpack_require__ = {};
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/define property getters */
@@ -611,9 +34,6 @@ exports.PHPMTRand = PHPMTRand;
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
-(() => {
-"use strict";
 // ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
 
@@ -7332,74 +6752,49 @@ function lastEncounterWasWanderingNC() {
 
 
 
-// EXTERNAL MODULE: ./node_modules/kol-rng/dist/index.js
-var dist = __webpack_require__(567);
 ;// ./src/utils.ts
 var utils_templateObject, utils_templateObject2, utils_templateObject3, utils_templateObject4, utils_templateObject5, utils_templateObject6, utils_templateObject7, utils_templateObject8;
-function src_utils_createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = src_utils_unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
-function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
-function utils_slicedToArray(arr, i) { return utils_arrayWithHoles(arr) || utils_iterableToArrayLimit(arr, i) || src_utils_unsupportedIterableToArray(arr, i) || utils_nonIterableRest(); }
-function utils_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function utils_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
-function utils_arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 function utils_toConsumableArray(arr) { return utils_arrayWithoutHoles(arr) || utils_iterableToArray(arr) || src_utils_unsupportedIterableToArray(arr) || utils_nonIterableSpread(); }
 function utils_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function src_utils_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return src_utils_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return src_utils_arrayLikeToArray(o, minLen); }
 function utils_iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
 function utils_arrayWithoutHoles(arr) { if (Array.isArray(arr)) return src_utils_arrayLikeToArray(arr); }
+function src_utils_createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = src_utils_unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function utils_slicedToArray(arr, i) { return utils_arrayWithHoles(arr) || utils_iterableToArrayLimit(arr, i) || src_utils_unsupportedIterableToArray(arr, i) || utils_nonIterableRest(); }
+function utils_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function src_utils_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return src_utils_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return src_utils_arrayLikeToArray(o, minLen); }
 function src_utils_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+function utils_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function utils_arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
 
-
-var effects = [5, 10, 11, 12, 14, 16, 18, 19, 21, 22, 23, 24, 25, 26, 28, 30, 31, 32, 33, 34, 35, 36, 38, 46, 48, 49, 50, 51, 52, 53, 54, 55, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 73, 76, 77, 78, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 102, 103, 104, 107, 108, 109, 110, 112, 114, 119, 120, 121, 122, 123, 124, 125, 126, 128, 129, 130, 131, 132, 138, 145, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 178, 179, 199, 200, 201, 202, 203, 204, 205, 206, 208, 209, 210, 212, 213, 214, 215, 218, 220, 221, 223, 224, 225, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 244, 245, 246, 247, 248, 250, 251, 252, 253, 254, 255, 256, 257, 259, 260, 261, 262, 263, 269, 270, 271, 272, 273, 274, 276, 277, 278, 279, 289, 290, 291, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 326, 327, 329, 330, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 353, 354, 355, 356, 358, 359, 360, 361, 362, 363, 364, 368, 370, 371, 372, 373, 375, 376, 377, 378, 379, 382, 427, 428, 429, 430, 438, 439, 440, 441, 442, 443, 444, 446, 447, 448, 450, 451, 452, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 466, 467, 468, 469, 470, 471, 476, 477, 478, 479, 482, 483, 484, 485, 487, 488, 489, 490, 491, 492, 493, 494, 497, 499, 501, 502, 504, 505, 506, 507, 512, 513, 514, 515, 516, 517, 519, 520, 521, 525, 526, 527, 528, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 547, 549, 550, 551, 552, 553, 554, 555, 556, 558, 559, 560, 561, 562, 564, 565, 575, 576, 577, 579, 580, 581, 582, 583, 585, 586, 587, 588, 603, 604, 605, 614, 617, 618, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 631, 632, 634, 635, 636, 637, 638, 640, 644, 645, 646, 647, 648, 649, 650, 651, 654, 655, 656, 657, 658, 661, 662, 664, 666, 667, 668, 669, 673, 674, 678, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695, 696, 698, 699, 700, 701, 702, 703, 704, 706, 707, 708, 710, 711, 716, 717, 719, 720, 722, 723, 724, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736, 737, 738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755, 756, 757, 759, 765, 768, 777, 778, 779, 780, 781, 783, 788, 796, 797, 798, 799, 800, 801, 802, 803, 804, 805, 824, 825, 827, 828, 829, 830, 831, 832, 836, 837, 838, 840, 841, 842, 843, 844, 847, 848, 849, 850, 851, 852, 884, 885, 886, 887, 888, 889, 890, 891, 892, 894, 895, 896, 897, 898, 899, 900, 901, 902, 903, 904, 905, 906, 907, 909, 911, 912, 913, 914, 915, 916, 917, 919, 920, 921, 922, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 942, 943, 944, 945, 946, 947, 950, 951, 953, 954, 955, 957, 958, 959, 961, 962, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 978, 979, 982, 983, 984, 985, 986, 987, 988, 989, 990, 991, 992, 993, 994, 995, 997, 998, 999, 1000, 1001, 1002, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025, 1027, 1028, 1029, 1031, 1036, 1041, 1043, 1045, 1119, 1120, 1121, 1128, 1132, 1133, 1134, 1135, 1136, 1138, 1139, 1140, 1142, 1143, 1151, 1152, 1153, 1154, 1155, 1156, 1157, 1158, 1168, 1169, 1172, 1173, 1188, 1189, 1190, 1191, 1192, 1193, 1196, 1197, 1198, 1199, 1200, 1201, 1202, 1203, 1204, 1205, 1209, 1210, 1215, 1218, 1219, 1228, 1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1265, 1266, 1267, 1268, 1269, 1270, 1271, 1272, 1279, 1280, 1281, 1282, 1283, 1284, 1291, 1292, 1293, 1294, 1298, 1299, 1300, 1319, 1320, 1321, 1322, 1323, 1324, 1330, 1331, 1332, 1333, 1334, 1341, 1342, 1343, 1344, 1346, 1347, 1351, 1352, 1353, 1355, 1357, 1358, 1359, 1360, 1361, 1362, 1363, 1365, 1374, 1375, 1376, 1377, 1378, 1382, 1383, 1384, 1385, 1386, 1387, 1388, 1389, 1390, 1391, 1392, 1393, 1396, 1397, 1398, 1399, 1400, 1401, 1402, 1403, 1404, 1405, 1406, 1407, 1408, 1409, 1410, 1411, 1412, 1425, 1426, 1427, 1435, 1436, 1437, 1438, 1440, 1443, 1454, 1455, 1459, 1460, 1461, 1462, 1463, 1480, 1483, 1484, 1485, 1486, 1487, 1489, 1490, 1491, 1493, 1494, 1496, 1497, 1498, 1501, 1502, 1503, 1507, 1508, 1509, 1510, 1511, 1512, 1513, 1514, 1517, 1518, 1519, 1520, 1521, 1522, 1523, 1524, 1525, 1527, 1528, 1529, 1530, 1531, 1534, 1535, 1536, 1538, 1540, 1541, 1542, 1543, 1559, 1563, 1564, 1565, 1566, 1567, 1568, 1569, 1571, 1572, 1573, 1574, 1575, 1576, 1577, 1578, 1579, 1580, 1581, 1582, 1583, 1584, 1585, 1586, 1587, 1588, 1589, 1590, 1591, 1592, 1593, 1594, 1595, 1596, 1597, 1598, 1599, 1600, 1601, 1603, 1604, 1605, 1606, 1607, 1608, 1609, 1610, 1611, 1614, 1615, 1616, 1617, 1618, 1619, 1620, 1621, 1622, 1623, 1624, 1625, 1626, 1627, 1628, 1630, 1631, 1632, 1636, 1637, 1638, 1639, 1641, 1642, 1643, 1644, 1646, 1647, 1648, 1649, 1650, 1651, 1652, 1653, 1654, 1656, 1658, 1659, 1660, 1661, 1662, 1663, 1664, 1698, 1699, 1700, 1701, 1702, 1703, 1704, 1707, 1713, 1715, 1716, 1717, 1722, 1723, 1724, 1725, 1726, 1727, 1728, 1729, 1730, 1731, 1732, 1735, 1736, 1738, 1743, 1744, 1745, 1747, 1749, 1751, 1752, 1754, 1755, 1756, 1758, 1759, 1760, 1761, 1762, 1763, 1764, 1765, 1768, 1769, 1770, 1771, 1772, 1773, 1774, 1775, 1788, 1789, 1792, 1793, 1802, 1806, 1807, 1808, 1811, 1813, 1814, 1815, 1816, 1817, 1819, 1820, 1821, 1823, 1824, 1827, 1828, 1832, 1833, 1834, 1835, 1836, 1907, 1914, 1915, 1916, 1917, 1918, 1919, 1920, 1921, 1922, 1926, 1927, 1928, 1929, 1930, 1932, 1935, 1951, 1952, 1953, 1954, 1955, 1956, 1957, 1958, 1959, 1960, 1961, 1962, 1963, 1964, 1965, 1966, 1967, 1968, 1969, 1970, 1971, 1972, 1973, 1974, 1975, 1979, 1980, 1981, 1982, 1983, 1984, 1986, 1988, 1989, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2050, 2063, 2065, 2066, 2067, 2069, 2070, 2071, 2076, 2077, 2078, 2079, 2080, 2081, 2082, 2083, 2087, 2088, 2089, 2100, 2101, 2103, 2104, 2105, 2106, 2107, 2108, 2109, 2111, 2112, 2117, 2138, 2145, 2146, 2150, 2156, 2157, 2158, 2163, 2164, 2180, 2181, 2182, 2183, 2184, 2185, 2186, 2187, 2188, 2189, 2190, 2197, 2198, 2202, 2204, 2206, 2210, 2211, 2214, 2218, 2222, 2226, 2234, 2238, 2242, 2246, 2250, 2254, 2258, 2262, 2268, 2269, 2280, 2281, 2283, 2284, 2286, 2287, 2288, 2289, 2290, 2291, 2292, 2296, 2297, 2298, 2299, 2300, 2301, 2302, 2303, 2304, 2305, 2306, 2307, 2318, 2319, 2321, 2322, 2324, 2325, 2326, 2328, 2330, 2332, 2333, 2334, 2335, 2343, 2347, 2348, 2349, 2350, 2351, 2352, 2353, 2355, 2356, 2357, 2358, 2359, 2360, 2361, 2362, 2363, 2364, 2365, 2372, 2377, 2378, 2379, 2380, 2381, 2382, 2399, 2408, 2420, 2421, 2423, 2424, 2432, 2433, 2434, 2435, 2441, 2442, 2445, 2446, 2447, 2448, 2459, 2460, 2465, 2466, 2467, 2468, 2471, 2472, 2473, 2474, 2475, 2476, 2488, 2490, 2491, 2492, 2493, 2494, 2495, 2496, 2497, 2498, 2500, 2501, 2502, 2503, 2504, 2505, 2506, 2507, 2508, 2518, 2519, 2525, 2526, 2527, 2528, 2529, 2530, 2531, 2532, 2533, 2534, 2535, 2537, 2538, 2548, 2561, 2564, 2568, 2569, 2570, 2571, 2572, 2573, 2577, 2579, 2581, 2583, 2584, 2585, 2586, 2587, 2596, 2598, 2599, 2600, 2601, 2602, 2623, 2624, 2626, 2627, 2629, 2677, 2683, 2684, 2685, 2686, 2687, 2698, 2703, 2704, 2705, 2706, 2707, 2708, 2710, 2711, 2713, 2714, 2715, 2717, 2718, 2719, 2724, 2725, 2726, 2727, 2746, 2747, 2748, 2749, 2750, 2751, 2752, 2753, 2754, 2755, 2756, 2757, 2760, 2761, 2771, 2772, 2773, 2777, 2778, 2779, 2780, 2783, 2784, 2785, 2786, 2787, 2789, 2809, 2826, 2833, 2837, 2839, 2847, 2856, 2857, 2875, 2876, 2877, 2878, 2880, 2895, 2904, 2905, 2906, 2909, 2923, 2925, 2926, 2927, 2939, 2958, 2959, 2960, 2961, 2967, 2968, 2970, 2971, 2972, 2973, 2974, 2975, 2976, 2978, 2979, 2980, 2981, 2983, 2984, 2985, 2986, 2987, 2988, 2990, 2990];
-var effectMap = new Map(utils_toConsumableArray(effects.entries()).map(_ref => {
-  var _ref2 = utils_slicedToArray(_ref, 2),
-    index = _ref2[0],
-    effectId = _ref2[1];
-  return [index, (0,external_kolmafia_namespaceObject.toEffect)(effectId)];
-}));
-function pickEffects(rng, count) {
-  return Array(count).fill(null).flatMap(() => {
-    var roll = rng.roll(0, effects.length - 1);
-    var effect = effectMap.get(roll);
-    return effect ? [[roll, effect]] : [];
-  });
-}
-function generateOne(seed, effectCount) {
-  var rng = new dist/* PHPMTRand */.N(seed);
-  var buskEffects = pickEffects(rng, effectCount);
-  return buskEffects;
-}
 // eslint-disable-next-line libram/verify-constants
 var beret = template_string_$item(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["prismatic beret"])));
 var taoMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
 function scoreBusk(effects, weightedModifiers, uselessEffects) {
   var usefulEffects = effects.filter(ef => !uselessEffects.includes(ef));
-  return sum(weightedModifiers, _ref3 => {
-    var _ref4 = utils_slicedToArray(_ref3, 2),
-      modifier = _ref4[0],
-      weight = _ref4[1];
+  return sum(weightedModifiers, _ref => {
+    var _ref2 = utils_slicedToArray(_ref, 2),
+      modifier = _ref2[0],
+      weight = _ref2[1];
     return weight * sum(usefulEffects, ef => (0,external_kolmafia_namespaceObject.numericModifier)(ef, modifier));
   });
 }
-function findTopBusksFast(generateOne, weightedModifiers, uselessEffects) {
+function findTopBusksFast(weightedModifiers, uselessEffects) {
   var allBusks = beretDASum.flatMap(daRaw => {
-    var da = daRaw / 5;
-    var pow = da * 5;
-    var softcappedPow = pow > 11000 ? Math.floor(11000 + Math.pow(pow - 11000, 0.8)) : pow;
-    var wzrd = Math.ceil(da / 20);
     return Array(5).fill(null).map((_, buskIndex) => {
-      var seed = softcappedPow + buskIndex;
-      var raw = generateOne(seed, wzrd, false).map(_ref5 => {
-        var _ref6 = utils_slicedToArray(_ref5, 2),
-          eff = _ref6[1];
-        return eff;
-      });
-      var effects = Array.from(new Set(raw));
+      var rawEffects = (0,external_kolmafia_namespaceObject.beretBuskingEffects)(daRaw, buskIndex);
+      var effects = Array.from(new Set(Object.keys(rawEffects).map(name => {
+        try {
+          return (0,external_kolmafia_namespaceObject.toEffect)(name);
+        } catch (_unused) {
+          (0,external_kolmafia_namespaceObject.print)("Invalid effect name: ".concat(name), "red");
+          return null;
+        }
+      }).filter(e => e !== null)));
       var score = scoreBusk(effects, weightedModifiers, uselessEffects);
       return {
-        seed: seed,
-        da: da,
+        daRaw: daRaw,
         effects: effects,
         score: score,
         buskIndex: buskIndex
@@ -7430,7 +6825,7 @@ function findTopBusksFast(generateOne, weightedModifiers, uselessEffects) {
     busks: topBusks
   };
 }
-function reconstructOutfit(da) {
+function reconstructOutfit(daRaw) {
   var _iterator2 = src_utils_createForOfIteratorHelper(allHats),
     _step2;
   try {
@@ -7449,7 +6844,7 @@ function reconstructOutfit(da) {
             for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
               var _pants = _step4.value;
               var pantsPower = have(template_string_$skill(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(_pants) : (0,external_kolmafia_namespaceObject.getPower)(_pants);
-              if (shirtPower + hatPower + pantsPower === da) {
+              if (shirtPower + hatPower + pantsPower === daRaw) {
                 return {
                   hat: hat,
                   shirt: shirt,
@@ -7507,15 +6902,15 @@ function printBuskResult(result, modifiers) {
       var _hat$name, _shirt$name, _pants$name;
       var _step6$value = _step6.value,
         effects = _step6$value.effects,
-        da = _step6$value.da,
+        daRaw = _step6$value.daRaw,
         buskIndex = _step6$value.buskIndex;
       var effectNames = effects.map(e => e.name).join(", ");
       var modifierValues = modifiers.map(mod => {
         var total = sum(effects, ef => (0,external_kolmafia_namespaceObject.numericModifier)(ef, mod));
         return "".concat(mod.name, ": ").concat(total);
       }).join(", ");
-      (0,external_kolmafia_namespaceObject.print)("DA ".concat(da * 5, " Busk ").concat(buskIndex + 1, ", Effects: ").concat(effectNames, ", ").concat(modifierValues));
-      var _reconstructOutfit = reconstructOutfit(da * 5),
+      (0,external_kolmafia_namespaceObject.print)("DA ".concat(daRaw, " Busk ").concat(buskIndex + 1, ", Effects: ").concat(effectNames, ", ").concat(modifierValues));
+      var _reconstructOutfit = reconstructOutfit(daRaw),
         hat = _reconstructOutfit.hat,
         shirt = _reconstructOutfit.shirt,
         pants = _reconstructOutfit.pants;
@@ -7540,6 +6935,135 @@ var hats = utils_toConsumableArray(new Set(allHats.map(i => taoMultiplier * (0,e
 var pants = utils_toConsumableArray(new Set(allPants.map(i => taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(i))));
 var shirts = utils_toConsumableArray(new Set(allShirts.map(i => (0,external_kolmafia_namespaceObject.getPower)(i))));
 var beretDASum = utils_toConsumableArray(new Set(hats.flatMap(hat => pants.flatMap(pant => shirts.flatMap(shirt => hat + pant + shirt)))));
+;// ./node_modules/libram/dist/since.js
+function since_defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, since_toPropertyKey(descriptor.key), descriptor); } }
+function since_createClass(Constructor, protoProps, staticProps) { if (protoProps) since_defineProperties(Constructor.prototype, protoProps); if (staticProps) since_defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function since_toPropertyKey(t) { var i = since_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function since_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function since_classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function since_callSuper(t, o, e) { return o = since_getPrototypeOf(o), since_possibleConstructorReturn(t, since_isNativeReflectConstruct() ? Reflect.construct(o, e || [], since_getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function since_possibleConstructorReturn(self, call) { if (call && (typeof call === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return since_assertThisInitialized(self); }
+function since_assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function since_inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) since_setPrototypeOf(subClass, superClass); }
+function since_wrapNativeSuper(Class) { var _cache = typeof Map === "function" ? new Map() : undefined; since_wrapNativeSuper = function _wrapNativeSuper(Class) { if (Class === null || !since_isNativeFunction(Class)) return Class; if (typeof Class !== "function") { throw new TypeError("Super expression must either be null or a function"); } if (typeof _cache !== "undefined") { if (_cache.has(Class)) return _cache.get(Class); _cache.set(Class, Wrapper); } function Wrapper() { return since_construct(Class, arguments, since_getPrototypeOf(this).constructor); } Wrapper.prototype = Object.create(Class.prototype, { constructor: { value: Wrapper, enumerable: false, writable: true, configurable: true } }); return since_setPrototypeOf(Wrapper, Class); }; return since_wrapNativeSuper(Class); }
+function since_construct(t, e, r) { if (since_isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments); var o = [null]; o.push.apply(o, e); var p = new (t.bind.apply(t, o))(); return r && since_setPrototypeOf(p, r.prototype), p; }
+function since_isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (since_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function since_isNativeFunction(fn) { try { return Function.toString.call(fn).indexOf("[native code]") !== -1; } catch (e) { return typeof fn === "function"; } }
+function since_setPrototypeOf(o, p) { since_setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return since_setPrototypeOf(o, p); }
+function since_getPrototypeOf(o) { since_getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return since_getPrototypeOf(o); }
+/**
+ * Provides functions for checking KoLmafia's version and revision.
+ *
+ * @packageDocumentation
+ */
+
+/**
+ * Represents an exception thrown when the current KoLmafia version does not
+ * match an expected condition.
+ */
+var KolmafiaVersionError = /*#__PURE__*/function (_Error) {
+  function KolmafiaVersionError(message) {
+    var _this;
+    since_classCallCheck(this, KolmafiaVersionError);
+    _this = since_callSuper(this, KolmafiaVersionError, [message]);
+    // Explicitly set the prototype, so that 'instanceof' still works in Node.js
+    // even when the class is transpiled down to ES5
+    // See: https://github.com/Microsoft/TypeScript-wiki/blob/master/Breaking-Changes.md#extending-built-ins-like-error-array-and-map-may-no-longer-work
+    // Note that this code isn't needed for Rhino.
+    Object.setPrototypeOf(_this, KolmafiaVersionError.prototype);
+    return _this;
+  }
+  since_inherits(KolmafiaVersionError, _Error);
+  return since_createClass(KolmafiaVersionError);
+}( /*#__PURE__*/since_wrapNativeSuper(Error));
+// Manually set class name, so that the stack trace shows proper name in Rhino
+KolmafiaVersionError.prototype.name = "KolmafiaVersionError";
+/**
+ * Returns the currently executing script name, suitable for embedding in an
+ * error message.
+ *
+ * @returns Path of the main script wrapped in single-quotes, or `"This script"`
+ *    if the path cannot be determined
+ */
+function getScriptName() {
+  var _require$main;
+  // In Rhino, the current script name is available in require.main.id
+  var scriptName = (_require$main = require.main) === null || _require$main === void 0 ? void 0 : _require$main.id;
+  return scriptName ? "'".concat(scriptName, "'") : "This script";
+}
+/**
+ * If KoLmafia's revision number is less than `revision`, throws an exception.
+ * Otherwise, does nothing.
+ *
+ * This behaves like the `since rXXX;` statement in ASH.
+ *
+ * @param revision Revision number
+ * @throws {KolmafiaVersionError}
+ *    If KoLmafia's revision number is less than `revision`.
+ * @throws {TypeError} If `revision` is not an integer
+ * @example
+ * ```ts
+ * // Throws if KoLmafia revision is less than r20500
+ * sinceKolmafiaRevision(20500);
+ * ```
+ */
+function sinceKolmafiaRevision(revision) {
+  if (!Number.isInteger(revision)) {
+    throw new TypeError("Invalid revision number ".concat(revision, " (must be an integer)"));
+  }
+  // Based on net.sourceforge.kolmafia.textui.Parser.sinceException()
+  var currentRevision = (0,external_kolmafia_namespaceObject.getRevision)();
+  if (currentRevision > 0 && currentRevision < revision) {
+    throw new KolmafiaVersionError("".concat(getScriptName(), " requires revision r").concat(revision, " of kolmafia or higher (current: ").concat((0,external_kolmafia_namespaceObject.getRevision)(), "). Up-to-date builds can be found at https://ci.kolmafia.us/."));
+  }
+}
+/**
+ * If KoLmafia's version is less than `majorVersion.minorVersion`, throws an
+ * exception.
+ * Otherwise, does nothing.
+ *
+ * This behaves like the `since X.Y;` statement in ASH.
+ *
+ * @param majorVersion Major version number
+ * @param minorVersion Minor version number
+ * @deprecated Point versions are no longer released by KoLmafia
+ * @throws {KolmafiaVersionError}
+ *    If KoLmafia's major version is less than `majorVersion`, or if the major
+ *    versions are equal but the minor version is less than `minorVersion`
+ * @throws {TypeError}
+ *    If either `majorVersion` or `minorVersion` are not integers
+ * @example
+ * ```ts
+ * // Throws if KoLmafia version is less than 20.7
+ * sinceKolmafiaVersion(20, 7);
+ * ```
+ */
+function sinceKolmafiaVersion(majorVersion, minorVersion) {
+  if (getRevision() >= 25720) {
+    return;
+  }
+  if (!Number.isInteger(majorVersion)) {
+    throw new TypeError("Invalid major version number ".concat(majorVersion, " (must be an integer)"));
+  }
+  if (!Number.isInteger(minorVersion)) {
+    throw new TypeError("Invalid minor version number ".concat(minorVersion, " (must be an integer)"));
+  }
+  if (majorVersion > 21 || majorVersion === 20 && minorVersion > 9) {
+    throw new Error("There were no versions released after 21.09. This command will always fail");
+  }
+  var versionStr = getVersion();
+  var versionStrMatch = /v(\d+)\.(\d+)/.exec(versionStr);
+  if (!versionStrMatch) {
+    // This is not something the user should handle
+    throw new Error("Unexpected KoLmafia version string: \"".concat(versionStr, "\". You may need to update the script."));
+  }
+  var currentMajorVersion = Number(versionStrMatch[1]);
+  var currentMinorVersion = Number(versionStrMatch[2]);
+  // Based on net.sourceforge.kolmafia.textui.Parser.sinceException()
+  if (currentMajorVersion < majorVersion || currentMajorVersion === majorVersion && currentMinorVersion < minorVersion) {
+    throw new KolmafiaVersionError("".concat(getScriptName(), " requires version ").concat(majorVersion, ".").concat(minorVersion, " of kolmafia or higher (current: ").concat(currentMajorVersion, ".").concat(currentMinorVersion, "). Up-to-date builds can be found at https://ci.kolmafia.us/."));
+  }
+}
 ;// ./src/main.ts
 var main_templateObject;
 function main_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
@@ -7585,6 +7109,7 @@ function parseEffects(input) {
   return effectList.length > 0 ? effectList : $effects(main_templateObject || (main_templateObject = main_taggedTemplateLiteral([""])));
 }
 function main(command) {
+  sinceKolmafiaRevision(28549);
   Args.fill(args, command);
   if (args.help) {
     Args.showHelp(args);
@@ -7592,7 +7117,7 @@ function main(command) {
   }
   var weightedModifiers = parseWeightedModifiers(args.modifiers);
   var uselesseffects = parseEffects(args.uselesseffects);
-  var result = findTopBusksFast(generateOne, weightedModifiers, uselesseffects);
+  var result = findTopBusksFast(weightedModifiers, uselesseffects);
   (0,external_kolmafia_namespaceObject.print)("DEBUG: Parsed modifiers = ".concat(weightedModifiers.map(_ref => {
     var _ref2 = main_slicedToArray(_ref, 2),
       m = _ref2[0],
@@ -7605,8 +7130,6 @@ function main(command) {
     return m;
   }));
 }
-})();
-
 var __webpack_export_target__ = exports;
 for(var __webpack_i__ in __webpack_exports__) __webpack_export_target__[__webpack_i__] = __webpack_exports__[__webpack_i__];
 if(__webpack_exports__.__esModule) Object.defineProperty(__webpack_export_target__, "__esModule", { value: true });
