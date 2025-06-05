@@ -6768,6 +6768,7 @@ function utils_arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
 
+
 // eslint-disable-next-line libram/verify-constants
 var beret = template_string_$item(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["prismatic beret"])));
 var taoMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
@@ -6781,8 +6782,11 @@ function scoreBusk(effects, weightedModifiers, uselessEffects) {
   });
 }
 function findTopBusksFast(weightedModifiers, uselessEffects) {
+  var BUSKNUM = args.allbusks ? 5 : utils_clamp(5 - (0,external_kolmafia_namespaceObject.toInt)(property_get("_beretBuskingUses")), 0, 5);
+  var startBuskIndex = 5 - BUSKNUM;
   var allBusks = beretDASum.flatMap(daRaw => {
-    return Array(5).fill(null).map((_, buskIndex) => {
+    return Array(BUSKNUM).fill(null).map((_, i) => {
+      var buskIndex = startBuskIndex + i;
       var rawEffects = (0,external_kolmafia_namespaceObject.beretBuskingEffects)(daRaw, buskIndex);
       var effects = Array.from(new Set(Object.keys(rawEffects).map(name => {
         try {
@@ -6818,7 +6822,6 @@ function findTopBusksFast(weightedModifiers, uselessEffects) {
     _iterator.f();
   }
   var topBusks = Array.from(bestBusksByIndex.values());
-  if (topBusks.length < 5) return null;
   var totalScore = sum(topBusks, "score");
   return {
     score: totalScore,
@@ -7085,6 +7088,10 @@ var args = Args.create("Beret Busk Tester", "Be good, be kind", {
   uselesseffects: Args.string({
     help: "Effects that aren't helpful for you, for instance uselesseffects=\"Leash of Linguini, Empathy, Thoughtful Empathy\"",
     default: ""
+  }),
+  allbusks: Args.boolean({
+    help: "Set allbusks to \"true\" to check all busk levels; default behavior is only to test available busks",
+    default: false
   })
 });
 function parseWeightedModifiers(input) {
