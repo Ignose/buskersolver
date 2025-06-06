@@ -17,8 +17,11 @@ export const args = Args.create("Beret Busk Tester", "Be good, be kind", {
     default: false,
   }),
   busk: Args.number({
-    help: `Check a specific busk by passing a number to check (1-5)`
-  })
+    help: `Check a specific busk by passing a number to check (1-5)`,
+  }),
+  checkhammertime: Args.boolean({
+    help: `Pretend we have effect hammertime to widen the pants scope`,
+  }),
 });
 
 function parseWeightedModifiers(input: string): [Modifier, number][] {

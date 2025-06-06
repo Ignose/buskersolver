@@ -1,5 +1,6 @@
 import {
   beretBuskingEffects,
+  canEquip,
   Effect,
   getPower,
   Item,
@@ -10,7 +11,7 @@ import {
   toInt,
   toSlot,
 } from "kolmafia";
-import { $familiar, $item, $skill, $slot, clamp, get, have, sum } from "libram";
+import { $effect, $familiar, $item, $skill, $slot, clamp, get, have, sum } from "libram";
 import { args } from "./main";
 
 export interface Busk {
@@ -27,7 +28,10 @@ export interface BuskResult {
 
 // eslint-disable-next-line libram/verify-constants
 const beret = $item`prismatic beret`;
-const taoMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
+const taoHatMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
+const taoPantsMultiplier = have($skill`Tao of the Terrapin`) ? 1 : 0;
+const hammerTimeMultiplier = have($effect`Hammertime`) || args.checkhammertime ? 3 : 0;
+const totalPantsMultiplier = 1 + hammerTimeMultiplier + taoPantsMultiplier;
 
 function scoreBusk(
   effects: Effect[],
@@ -45,57 +49,56 @@ function scoreBusk(
 export function findTopBusksFast(
   weightedModifiers: [Modifier, number][],
   uselessEffects: Effect[],
-  busknumber?: number,
+  busknumber?: number
 ): BuskResult | null {
   const BUSKNUM = args.allbusks ? 5 : clamp(5 - toInt(get("_beretBuskingUses")), 0, 5);
   const startBuskIndex = 5 - BUSKNUM;
   const allBusks =
     busknumber !== undefined
-    ? beretDASum.map((daRaw) => {
-        const buskIndex = busknumber - 1;
-        const rawEffects = beretBuskingEffects(daRaw, buskIndex);
-        const effects: Effect[] = Array.from(
-          new Set(
-            Object.keys(rawEffects)
-              .map((name) => {
-                try {
-                  return toEffect(name);
-                } catch {
-                  print(`Invalid effect name: ${name}`, "red");
-                  return null;
-                }
-              })
-              .filter((e): e is Effect => e !== null)
-          )
-        );
-        const score = scoreBusk(effects, weightedModifiers, uselessEffects);
-        return { daRaw, effects, score, buskIndex };
-      })
-    :
-    beretDASum.flatMap((daRaw) => {
-    return Array(BUSKNUM)
-      .fill(null)
-      .map((_, i) => {
-        const buskIndex = startBuskIndex + i;
-        const rawEffects = beretBuskingEffects(daRaw, buskIndex);
-        const effects: Effect[] = Array.from(
-          new Set(
-            Object.keys(rawEffects)
-              .map((name) => {
-                try {
-                  return toEffect(name);
-                } catch {
-                  print(`Invalid effect name: ${name}`, "red");
-                  return null;
-                }
-              })
-              .filter((e): e is Effect => e !== null)
-          )
-        );
-        const score = scoreBusk(effects, weightedModifiers, uselessEffects);
-        return { daRaw, effects, score, buskIndex };
-      });
-  });
+      ? beretDASum.map((daRaw) => {
+          const buskIndex = busknumber - 1;
+          const rawEffects = beretBuskingEffects(daRaw, buskIndex);
+          const effects: Effect[] = Array.from(
+            new Set(
+              Object.keys(rawEffects)
+                .map((name) => {
+                  try {
+                    return toEffect(name);
+                  } catch {
+                    print(`Invalid effect name: ${name}`, "red");
+                    return null;
+                  }
+                })
+                .filter((e): e is Effect => e !== null)
+            )
+          );
+          const score = scoreBusk(effects, weightedModifiers, uselessEffects);
+          return { daRaw, effects, score, buskIndex };
+        })
+      : beretDASum.flatMap((daRaw) => {
+          return Array(BUSKNUM)
+            .fill(null)
+            .map((_, i) => {
+              const buskIndex = startBuskIndex + i;
+              const rawEffects = beretBuskingEffects(daRaw, buskIndex);
+              const effects: Effect[] = Array.from(
+                new Set(
+                  Object.keys(rawEffects)
+                    .map((name) => {
+                      try {
+                        return toEffect(name);
+                      } catch {
+                        print(`Invalid effect name: ${name}`, "red");
+                        return null;
+                      }
+                    })
+                    .filter((e): e is Effect => e !== null)
+                )
+              );
+              const score = scoreBusk(effects, weightedModifiers, uselessEffects);
+              return { daRaw, effects, score, buskIndex };
+            });
+        });
 
   const bestBusksByIndex = new Map<number, Busk>();
   for (const busk of allBusks) {
@@ -113,15 +116,11 @@ export function findTopBusksFast(
 
 function reconstructOutfit(daRaw: number): { hat?: Item; shirt?: Item; pants?: Item } {
   for (const hat of allHats) {
-    const hatPower = have($skill`Tao of the Terrapin`)
-      ? taoMultiplier * getPower(hat)
-      : getPower(hat);
+    const hatPower = taoHatMultiplier * getPower(hat);
     for (const shirt of allShirts) {
       const shirtPower = getPower(shirt);
       for (const pants of allPants) {
-        const pantsPower = have($skill`Tao of the Terrapin`)
-          ? taoMultiplier * getPower(pants)
-          : getPower(pants);
+        const pantsPower = totalPantsMultiplier * getPower(pants);
         if (shirtPower + hatPower + pantsPower === daRaw) {
           return { hat, shirt, pants };
         }
@@ -172,16 +171,16 @@ export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]
 }
 
 // Equipment setup
-const allItems = Item.all().filter((i) => have(i));
+const allItems = Item.all().filter((i) => have(i) && canEquip(i));
 const allHats = have($familiar`Mad Hatrack`)
   ? allItems.filter((i) => toSlot(i) === $slot`hat`)
   : [beret];
 const allPants = allItems.filter((i) => toSlot(i) === $slot`pants`);
 const allShirts = allItems.filter((i) => toSlot(i) === $slot`shirt`);
 
-const hats = [...new Set(allHats.map((i) => taoMultiplier * getPower(i)))];
+const hats = [...new Set(allHats.map((i) => taoHatMultiplier * getPower(i)))];
 
-const pants = [...new Set(allPants.map((i) => taoMultiplier * getPower(i)))];
+const pants = [...new Set(allPants.map((i) => totalPantsMultiplier * getPower(i)))];
 const shirts = [...new Set(allShirts.map((i) => getPower(i)))];
 
 export const beretDASum = [
