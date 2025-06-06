@@ -1,5 +1,6 @@
 import {
   beretBuskingEffects,
+  canEquip,
   Effect,
   getPower,
   Item,
@@ -89,12 +90,21 @@ export function findTopBusksFast(
 
 function reconstructOutfit(daRaw: number): { hat?: Item; shirt?: Item; pants?: Item } {
   for (const hat of allHats) {
+    if (!canEquip(hat)) {
+      continue;
+    }
     const hatPower = have($skill`Tao of the Terrapin`)
       ? taoMultiplier * getPower(hat)
       : getPower(hat);
     for (const shirt of allShirts) {
+      if (!canEquip(shirt)) {
+        continue;
+      }
       const shirtPower = getPower(shirt);
       for (const pants of allPants) {
+        if (!canEquip(shirt)) {
+          continue;
+        }
         const pantsPower = have($skill`Tao of the Terrapin`)
           ? taoMultiplier * getPower(pants)
           : getPower(pants);
