@@ -44,11 +44,35 @@ function scoreBusk(
 
 export function findTopBusksFast(
   weightedModifiers: [Modifier, number][],
-  uselessEffects: Effect[]
+  uselessEffects: Effect[],
+  busknumber?: number,
 ): BuskResult | null {
   const BUSKNUM = args.allbusks ? 5 : clamp(5 - toInt(get("_beretBuskingUses")), 0, 5);
   const startBuskIndex = 5 - BUSKNUM;
-  const allBusks = beretDASum.flatMap((daRaw) => {
+  const allBusks =
+    busknumber !== undefined
+    ? beretDASum.map((daRaw) => {
+        const buskIndex = busknumber - 1;
+        const rawEffects = beretBuskingEffects(daRaw, buskIndex);
+        const effects: Effect[] = Array.from(
+          new Set(
+            Object.keys(rawEffects)
+              .map((name) => {
+                try {
+                  return toEffect(name);
+                } catch {
+                  print(`Invalid effect name: ${name}`, "red");
+                  return null;
+                }
+              })
+              .filter((e): e is Effect => e !== null)
+          )
+        );
+        const score = scoreBusk(effects, weightedModifiers, uselessEffects);
+        return { daRaw, effects, score, buskIndex };
+      })
+    :
+    beretDASum.flatMap((daRaw) => {
     return Array(BUSKNUM)
       .fill(null)
       .map((_, i) => {

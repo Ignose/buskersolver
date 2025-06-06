@@ -16,6 +16,9 @@ export const args = Args.create("Beret Busk Tester", "Be good, be kind", {
     help: `Set allbusks to "true" to check all busk levels; default behavior is only to test available busks`,
     default: false,
   }),
+  busk: Args.number({
+    help: `Check a specific busk by passing a number to check (1-5)`
+  })
 });
 
 function parseWeightedModifiers(input: string): [Modifier, number][] {
@@ -58,7 +61,7 @@ export function main(command?: string): void {
   const weightedModifiers = parseWeightedModifiers(args.modifiers);
   const uselesseffects = parseEffects(args.uselesseffects);
 
-  const result = findTopBusksFast(weightedModifiers, uselesseffects);
+  const result = findTopBusksFast(weightedModifiers, uselesseffects, args.busk);
 
   print(
     `DEBUG: Parsed modifiers = ${weightedModifiers.map(([m, w]) => `${w}×${m.name}`).join(", ")}`
