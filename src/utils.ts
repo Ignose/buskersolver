@@ -135,7 +135,7 @@ export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]
         return `${mod.name}: ${total}`;
       })
       .join(", ");
-    print(`DA ${daRaw} Busk ${buskIndex + 1}, Effects: ${effectNames}, ${modifierValues}`);
+    print(`Power ${daRaw} Busk ${buskIndex + 1}, Effects: ${effectNames}, ${modifierValues}`);
 
     const { hat, shirt, pants } = reconstructOutfit(daRaw);
     print(
@@ -143,6 +143,7 @@ export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]
         pants?.name ?? "?"
       }`
     );
+    print("    ");
   }
 }
 
