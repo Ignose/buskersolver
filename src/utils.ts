@@ -5,6 +5,7 @@ import {
   getPower,
   Item,
   Modifier,
+  npcPrice,
   numericModifier,
   print,
   toEffect,
@@ -28,10 +29,15 @@ export interface BuskResult {
 
 // eslint-disable-next-line libram/verify-constants
 const beret = $item`prismatic beret`;
-const taoHatMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
-const taoPantsMultiplier = have($skill`Tao of the Terrapin`) ? 1 : 0;
-const hammerTimeMultiplier = have($effect`Hammertime`) || args.checkhammertime ? 3 : 0;
-const totalPantsMultiplier = 1 + hammerTimeMultiplier + taoPantsMultiplier;
+
+function multipliers(): [number, number] {
+  const taoHatMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
+  const taoPantsMultiplier = have($skill`Tao of the Terrapin`) ? 1 : 0;
+  const hammerTimeMultiplier = have($effect`Hammertime`) || args.checkhammertime ? 3 : 0;
+  const totalPantsMultiplier = 1 + hammerTimeMultiplier + taoPantsMultiplier;
+
+  return [taoHatMultiplier, totalPantsMultiplier];
+}
 
 function scoreBusk(
   effects: Effect[],
@@ -52,6 +58,7 @@ export function findTopBusksFast(
   busknumber?: number
 ): BuskResult | null {
   const BUSKNUM = args.allbusks ? 5 : clamp(5 - toInt(get("_beretBuskingUses")), 0, 5);
+  const beretDASum = beretPowerSum();
   const startBuskIndex = 5 - BUSKNUM;
   const allBusks =
     busknumber !== undefined
@@ -116,11 +123,11 @@ export function findTopBusksFast(
 
 function reconstructOutfit(daRaw: number): { hat?: Item; shirt?: Item; pants?: Item } {
   for (const hat of allHats) {
-    const hatPower = taoHatMultiplier * getPower(hat);
+    const hatPower = multipliers()[0] * getPower(hat);
     for (const shirt of allShirts) {
       const shirtPower = getPower(shirt);
       for (const pants of allPants) {
-        const pantsPower = totalPantsMultiplier * getPower(pants);
+        const pantsPower = multipliers()[1] * getPower(pants);
         if (shirtPower + hatPower + pantsPower === daRaw) {
           return { hat, shirt, pants };
         }
@@ -170,21 +177,24 @@ export function printBuskResult(result: BuskResult | null, modifiers: Modifier[]
   }
 }
 
-// Equipment setup
 const allItems = Item.all().filter((i) => have(i) && canEquip(i));
+const shopItems = Item.all().filter((i) => npcPrice(i) > 0 && canEquip(i));
+allItems.push(...shopItems);
 const allHats = have($familiar`Mad Hatrack`)
   ? allItems.filter((i) => toSlot(i) === $slot`hat`)
   : [beret];
 const allPants = allItems.filter((i) => toSlot(i) === $slot`pants`);
 const allShirts = allItems.filter((i) => toSlot(i) === $slot`shirt`);
 
-const hats = [...new Set(allHats.map((i) => taoHatMultiplier * getPower(i)))];
+function beretPowerSum(): number[] {
+  const hats = [...new Set(allHats.map((i) => multipliers()[0] * getPower(i)))];
 
-const pants = [...new Set(allPants.map((i) => totalPantsMultiplier * getPower(i)))];
-const shirts = [...new Set(allShirts.map((i) => getPower(i)))];
+  const pants = [...new Set(allPants.map((i) => multipliers()[1] * getPower(i)))];
+  const shirts = [...new Set(allShirts.map((i) => getPower(i)))];
 
-export const beretDASum = [
-  ...new Set(
-    hats.flatMap((hat) => pants.flatMap((pant) => shirts.flatMap((shirt) => hat + pant + shirt)))
-  ),
-];
+  return [
+    ...new Set(
+      hats.flatMap((hat) => pants.flatMap((pant) => shirts.flatMap((shirt) => hat + pant + shirt)))
+    ),
+  ];
+}
