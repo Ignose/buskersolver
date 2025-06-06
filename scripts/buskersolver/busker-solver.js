@@ -6771,7 +6771,10 @@ function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.s
 
 // eslint-disable-next-line libram/verify-constants
 var beret = template_string_$item(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["prismatic beret"])));
-var taoMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
+var taoHatMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
+var taoPantsMultiplier = have(template_string_$skill(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 1 : 0;
+var hammerTimeMultiplier = have(template_string_$effect(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Hammertime"])))) || args.checkhammertime ? 3 : 0;
+var totalPantsMultiplier = 1 + hammerTimeMultiplier + taoPantsMultiplier;
 function scoreBusk(effects, weightedModifiers, uselessEffects) {
   var usefulEffects = effects.filter(ef => !uselessEffects.includes(ef));
   return sum(weightedModifiers, _ref => {
@@ -6781,17 +6784,35 @@ function scoreBusk(effects, weightedModifiers, uselessEffects) {
     return weight * sum(usefulEffects, ef => (0,external_kolmafia_namespaceObject.numericModifier)(ef, modifier));
   });
 }
-function findTopBusksFast(weightedModifiers, uselessEffects) {
+function findTopBusksFast(weightedModifiers, uselessEffects, busknumber) {
   var BUSKNUM = args.allbusks ? 5 : utils_clamp(5 - (0,external_kolmafia_namespaceObject.toInt)(property_get("_beretBuskingUses")), 0, 5);
   var startBuskIndex = 5 - BUSKNUM;
-  var allBusks = beretDASum.flatMap(daRaw => {
+  var allBusks = busknumber !== undefined ? beretDASum.map(daRaw => {
+    var buskIndex = busknumber - 1;
+    var rawEffects = (0,external_kolmafia_namespaceObject.beretBuskingEffects)(daRaw, buskIndex);
+    var effects = Array.from(new Set(Object.keys(rawEffects).map(name => {
+      try {
+        return (0,external_kolmafia_namespaceObject.toEffect)(name);
+      } catch (_unused) {
+        (0,external_kolmafia_namespaceObject.print)("Invalid effect name: ".concat(name), "red");
+        return null;
+      }
+    }).filter(e => e !== null)));
+    var score = scoreBusk(effects, weightedModifiers, uselessEffects);
+    return {
+      daRaw: daRaw,
+      effects: effects,
+      score: score,
+      buskIndex: buskIndex
+    };
+  }) : beretDASum.flatMap(daRaw => {
     return Array(BUSKNUM).fill(null).map((_, i) => {
       var buskIndex = startBuskIndex + i;
       var rawEffects = (0,external_kolmafia_namespaceObject.beretBuskingEffects)(daRaw, buskIndex);
       var effects = Array.from(new Set(Object.keys(rawEffects).map(name => {
         try {
           return (0,external_kolmafia_namespaceObject.toEffect)(name);
-        } catch (_unused) {
+        } catch (_unused2) {
           (0,external_kolmafia_namespaceObject.print)("Invalid effect name: ".concat(name), "red");
           return null;
         }
@@ -6834,7 +6855,7 @@ function reconstructOutfit(daRaw) {
   try {
     for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
       var hat = _step2.value;
-      var hatPower = have(template_string_$skill(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(hat) : (0,external_kolmafia_namespaceObject.getPower)(hat);
+      var hatPower = taoHatMultiplier * (0,external_kolmafia_namespaceObject.getPower)(hat);
       var _iterator3 = src_utils_createForOfIteratorHelper(allShirts),
         _step3;
       try {
@@ -6846,7 +6867,7 @@ function reconstructOutfit(daRaw) {
           try {
             for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
               var _pants = _step4.value;
-              var pantsPower = have(template_string_$skill(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(_pants) : (0,external_kolmafia_namespaceObject.getPower)(_pants);
+              var pantsPower = totalPantsMultiplier * (0,external_kolmafia_namespaceObject.getPower)(_pants);
               if (shirtPower + hatPower + pantsPower === daRaw) {
                 return {
                   hat: hat,
@@ -6912,12 +6933,13 @@ function printBuskResult(result, modifiers) {
         var total = sum(effects, ef => (0,external_kolmafia_namespaceObject.numericModifier)(ef, mod));
         return "".concat(mod.name, ": ").concat(total);
       }).join(", ");
-      (0,external_kolmafia_namespaceObject.print)("DA ".concat(daRaw, " Busk ").concat(buskIndex + 1, ", Effects: ").concat(effectNames, ", ").concat(modifierValues));
+      (0,external_kolmafia_namespaceObject.print)("Power ".concat(daRaw, " Busk ").concat(buskIndex + 1, ", Effects: ").concat(effectNames, ", ").concat(modifierValues));
       var _reconstructOutfit = reconstructOutfit(daRaw),
         hat = _reconstructOutfit.hat,
         shirt = _reconstructOutfit.shirt,
         pants = _reconstructOutfit.pants;
       (0,external_kolmafia_namespaceObject.print)("  - Equipment: Hat = ".concat((_hat$name = hat === null || hat === void 0 ? void 0 : hat.name) !== null && _hat$name !== void 0 ? _hat$name : "?", ", Shirt = ").concat((_shirt$name = shirt === null || shirt === void 0 ? void 0 : shirt.name) !== null && _shirt$name !== void 0 ? _shirt$name : "?", ", Pants = ").concat((_pants$name = pants === null || pants === void 0 ? void 0 : pants.name) !== null && _pants$name !== void 0 ? _pants$name : "?"));
+      (0,external_kolmafia_namespaceObject.print)("    ");
     };
     for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
       _loop();
@@ -6930,12 +6952,12 @@ function printBuskResult(result, modifiers) {
 }
 
 // Equipment setup
-var allItems = external_kolmafia_namespaceObject.Item.all().filter(i => have(i));
+var allItems = external_kolmafia_namespaceObject.Item.all().filter(i => have(i) && (0,external_kolmafia_namespaceObject.canEquip)(i));
 var allHats = have(template_string_$familiar(utils_templateObject5 || (utils_templateObject5 = utils_taggedTemplateLiteral(["Mad Hatrack"])))) ? allItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject6 || (utils_templateObject6 = utils_taggedTemplateLiteral(["hat"])))) : [beret];
 var allPants = allItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject7 || (utils_templateObject7 = utils_taggedTemplateLiteral(["pants"]))));
 var allShirts = allItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject8 || (utils_templateObject8 = utils_taggedTemplateLiteral(["shirt"]))));
-var hats = utils_toConsumableArray(new Set(allHats.map(i => taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(i))));
-var pants = utils_toConsumableArray(new Set(allPants.map(i => taoMultiplier * (0,external_kolmafia_namespaceObject.getPower)(i))));
+var hats = utils_toConsumableArray(new Set(allHats.map(i => taoHatMultiplier * (0,external_kolmafia_namespaceObject.getPower)(i))));
+var pants = utils_toConsumableArray(new Set(allPants.map(i => totalPantsMultiplier * (0,external_kolmafia_namespaceObject.getPower)(i))));
 var shirts = utils_toConsumableArray(new Set(allShirts.map(i => (0,external_kolmafia_namespaceObject.getPower)(i))));
 var beretDASum = utils_toConsumableArray(new Set(hats.flatMap(hat => pants.flatMap(pant => shirts.flatMap(shirt => hat + pant + shirt)))));
 ;// ./node_modules/libram/dist/since.js
@@ -7092,6 +7114,12 @@ var args = Args.create("Beret Busk Tester", "Be good, be kind", {
   allbusks: Args.boolean({
     help: "Set allbusks to \"true\" to check all busk levels; default behavior is only to test available busks",
     default: false
+  }),
+  busk: Args.number({
+    help: "Check a specific busk by passing a number to check (1-5)"
+  }),
+  checkhammertime: Args.boolean({
+    help: "Pretend we have effect hammertime to widen the pants scope"
   })
 });
 function parseWeightedModifiers(input) {
@@ -7124,7 +7152,7 @@ function main(command) {
   }
   var weightedModifiers = parseWeightedModifiers(args.modifiers);
   var uselesseffects = parseEffects(args.uselesseffects);
-  var result = findTopBusksFast(weightedModifiers, uselesseffects);
+  var result = findTopBusksFast(weightedModifiers, uselesseffects, args.busk);
   (0,external_kolmafia_namespaceObject.print)("DEBUG: Parsed modifiers = ".concat(weightedModifiers.map(_ref => {
     var _ref2 = main_slicedToArray(_ref, 2),
       m = _ref2[0],
