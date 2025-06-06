@@ -21,6 +21,7 @@ export const args = Args.create("Beret Busk Tester", "Be good, be kind", {
   }),
   checkhammertime: Args.boolean({
     help: `Pretend we have effect hammertime to widen the pants scope`,
+    default: false,
   }),
 });
 
