@@ -6771,10 +6771,13 @@ function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.s
 
 // eslint-disable-next-line libram/verify-constants
 var beret = template_string_$item(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["prismatic beret"])));
-var taoHatMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
-var taoPantsMultiplier = have(template_string_$skill(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 1 : 0;
-var hammerTimeMultiplier = have(template_string_$effect(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Hammertime"])))) || args.checkhammertime ? 3 : 0;
-var totalPantsMultiplier = 1 + hammerTimeMultiplier + taoPantsMultiplier;
+function multipliers() {
+  var taoHatMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
+  var taoPantsMultiplier = have(template_string_$skill(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 1 : 0;
+  var hammerTimeMultiplier = have(template_string_$effect(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Hammertime"])))) || args.checkhammertime ? 3 : 0;
+  var totalPantsMultiplier = 1 + hammerTimeMultiplier + taoPantsMultiplier;
+  return [taoHatMultiplier, totalPantsMultiplier];
+}
 function scoreBusk(effects, weightedModifiers, uselessEffects) {
   var usefulEffects = effects.filter(ef => !uselessEffects.includes(ef));
   return sum(weightedModifiers, _ref => {
@@ -6786,6 +6789,7 @@ function scoreBusk(effects, weightedModifiers, uselessEffects) {
 }
 function findTopBusksFast(weightedModifiers, uselessEffects, busknumber) {
   var BUSKNUM = args.allbusks ? 5 : utils_clamp(5 - (0,external_kolmafia_namespaceObject.toInt)(property_get("_beretBuskingUses")), 0, 5);
+  var beretDASum = beretPowerSum();
   var startBuskIndex = 5 - BUSKNUM;
   var allBusks = busknumber !== undefined ? beretDASum.map(daRaw => {
     var buskIndex = busknumber - 1;
@@ -6855,7 +6859,7 @@ function reconstructOutfit(daRaw) {
   try {
     for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
       var hat = _step2.value;
-      var hatPower = taoHatMultiplier * (0,external_kolmafia_namespaceObject.getPower)(hat);
+      var hatPower = multipliers()[0] * (0,external_kolmafia_namespaceObject.getPower)(hat);
       var _iterator3 = src_utils_createForOfIteratorHelper(allShirts),
         _step3;
       try {
@@ -6866,13 +6870,13 @@ function reconstructOutfit(daRaw) {
             _step4;
           try {
             for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-              var _pants = _step4.value;
-              var pantsPower = totalPantsMultiplier * (0,external_kolmafia_namespaceObject.getPower)(_pants);
+              var pants = _step4.value;
+              var pantsPower = multipliers()[1] * (0,external_kolmafia_namespaceObject.getPower)(pants);
               if (shirtPower + hatPower + pantsPower === daRaw) {
                 return {
                   hat: hat,
                   shirt: shirt,
-                  pants: _pants
+                  pants: pants
                 };
               }
             }
@@ -6950,16 +6954,18 @@ function printBuskResult(result, modifiers) {
     _iterator6.f();
   }
 }
-
-// Equipment setup
 var allItems = external_kolmafia_namespaceObject.Item.all().filter(i => have(i) && (0,external_kolmafia_namespaceObject.canEquip)(i));
+var shopItems = external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.npcPrice)(i) > 0 && (0,external_kolmafia_namespaceObject.canEquip)(i));
+allItems.push.apply(allItems, utils_toConsumableArray(shopItems));
 var allHats = have(template_string_$familiar(utils_templateObject5 || (utils_templateObject5 = utils_taggedTemplateLiteral(["Mad Hatrack"])))) ? allItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject6 || (utils_templateObject6 = utils_taggedTemplateLiteral(["hat"])))) : [beret];
 var allPants = allItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject7 || (utils_templateObject7 = utils_taggedTemplateLiteral(["pants"]))));
 var allShirts = allItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject8 || (utils_templateObject8 = utils_taggedTemplateLiteral(["shirt"]))));
-var hats = utils_toConsumableArray(new Set(allHats.map(i => taoHatMultiplier * (0,external_kolmafia_namespaceObject.getPower)(i))));
-var pants = utils_toConsumableArray(new Set(allPants.map(i => totalPantsMultiplier * (0,external_kolmafia_namespaceObject.getPower)(i))));
-var shirts = utils_toConsumableArray(new Set(allShirts.map(i => (0,external_kolmafia_namespaceObject.getPower)(i))));
-var beretDASum = utils_toConsumableArray(new Set(hats.flatMap(hat => pants.flatMap(pant => shirts.flatMap(shirt => hat + pant + shirt)))));
+function beretPowerSum() {
+  var hats = utils_toConsumableArray(new Set(allHats.map(i => multipliers()[0] * (0,external_kolmafia_namespaceObject.getPower)(i))));
+  var pants = utils_toConsumableArray(new Set(allPants.map(i => multipliers()[1] * (0,external_kolmafia_namespaceObject.getPower)(i))));
+  var shirts = utils_toConsumableArray(new Set(allShirts.map(i => (0,external_kolmafia_namespaceObject.getPower)(i))));
+  return utils_toConsumableArray(new Set(hats.flatMap(hat => pants.flatMap(pant => shirts.flatMap(shirt => hat + pant + shirt)))));
+}
 ;// ./node_modules/libram/dist/since.js
 function since_defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, since_toPropertyKey(descriptor.key), descriptor); } }
 function since_createClass(Constructor, protoProps, staticProps) { if (protoProps) since_defineProperties(Constructor.prototype, protoProps); if (staticProps) since_defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
