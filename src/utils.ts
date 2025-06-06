@@ -11,7 +11,7 @@ import {
   toInt,
   toSlot,
 } from "kolmafia";
-import { $familiar, $item, $skill, $slot, clamp, get, have, sum } from "libram";
+import { $effect, $familiar, $item, $skill, $slot, clamp, get, have, sum } from "libram";
 import { args } from "./main";
 
 export interface Busk {
@@ -29,6 +29,7 @@ export interface BuskResult {
 // eslint-disable-next-line libram/verify-constants
 const beret = $item`prismatic beret`;
 const taoMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
+const hammerMult = have($effect`Hammertime`) ? 3 : 0;
 
 function scoreBusk(
   effects: Effect[],
@@ -102,12 +103,12 @@ function reconstructOutfit(daRaw: number): { hat?: Item; shirt?: Item; pants?: I
       }
       const shirtPower = getPower(shirt);
       for (const pants of allPants) {
-        if (!canEquip(shirt)) {
+        if (!canEquip(pants)) {
           continue;
         }
-        const pantsPower = have($skill`Tao of the Terrapin`)
-          ? taoMultiplier * getPower(pants)
-          : getPower(pants);
+        const pantsPower =
+          (have($skill`Tao of the Terrapin`) ? taoMultiplier * getPower(pants) : getPower(pants)) +
+          hammerMult * getPower(pants);
         if (shirtPower + hatPower + pantsPower === daRaw) {
           return { hat, shirt, pants };
         }
