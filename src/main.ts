@@ -113,7 +113,8 @@ export function main(command?: string): void {
 
   if (args.effects !== Effect.none.name || args.modifiers !== Modifier.none.name) {
     const desiredEffects = args.effects !== Effect.none.name ? parseEffects(args.effects) : [];
-    const weightedModifiers = args.modifiers !== Modifier.none.name ? parseWeightedModifiers(args.modifiers) : {};
+    const weightedModifiers =
+      args.modifiers !== Modifier.none.name ? parseWeightedModifiers(args.modifiers) : {};
 
     const valuerFn = normalizeEffectValuer(hybridEffectValuer(desiredEffects, weightedModifiers));
 

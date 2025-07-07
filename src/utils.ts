@@ -49,7 +49,13 @@ function multipliers(slot: Slot): number {
   const taoMultiplier = have_($skill`Tao of the Terrapin`) ? 2 : 1;
   const hammertimeMultiplier = have_($effect`Hammertime`) || hammertime ? 3 : 0;
 
-  return slot === $slot`Shirt` ? 1 : slot === $slot`Hat` ? taoMultiplier : slot === $slot`Pants` ? taoMultiplier + hammertimeMultiplier : 0;
+  return slot === $slot`Shirt`
+    ? 1
+    : slot === $slot`Hat`
+    ? taoMultiplier
+    : slot === $slot`Pants`
+    ? taoMultiplier + hammertimeMultiplier
+    : 0;
 }
 
 export function printBuskResult(
@@ -133,7 +139,7 @@ export function printBuskResult(
     }
 
     const bestOutfit = findOutfit(daRaw, true);
-    if(bestOutfit === null) {
+    if (bestOutfit === null) {
       print("No viable outfit found, something went horribly wrong!");
     } else {
       const hat = bestOutfit.hat !== null ? bestOutfit.hat : Item.none;
@@ -236,20 +242,20 @@ function getUseableClothes(buyItem = true): {
   const availableItems = Item.all().filter(
     (i) => canEquip(i) && (have_(i) || (buyItem && npcPrice(i) > 0))
   );
-  const useableHats = have_($familiar`Mad Hatrack`) || checkhatrack
-    ? [...availableItems.filter((i) => toSlot(i) === $slot`hat`), $item.none]
-    : [beret];
+  const useableHats =
+    have_($familiar`Mad Hatrack`) || checkhatrack
+      ? [...availableItems.filter((i) => toSlot(i) === $slot`hat`), $item.none]
+      : [beret];
   const useablePants = [...availableItems.filter((i) => toSlot(i) === $slot`pants`), $item.none];
   const useableShirts = [...availableItems.filter((i) => toSlot(i) === $slot`shirt`), $item.none];
   return { useableHats, useablePants, useableShirts };
 }
 
 function availablePowersums(buyItem: boolean): number[] {
-
   const { useableHats, useablePants, useableShirts } = getUseableClothes(buyItem);
 
   const hatPowers = [...new Set(useableHats.map((i) => multipliers($slot`Hat`) * getPower(i)))];
-  const pantPowers = [...new Set(useablePants.map((i) => multipliers($slot`Pants`)  * getPower(i)))];
+  const pantPowers = [...new Set(useablePants.map((i) => multipliers($slot`Pants`) * getPower(i)))];
   const shirtPowers = [...new Set(useableShirts.map((i) => getPower(i)))];
 
   return [
@@ -358,7 +364,7 @@ export function findOptimalOutfitPower(
 const populateMap = (arr: Item[], max: number, double: number) => {
   const map = new Map<number, Item>();
   for (const it of arr) {
-    const power = getPower(it) * (double);
+    const power = getPower(it) * double;
     if (power > max) continue;
 
     const existing = map.get(power);
@@ -393,7 +399,7 @@ export function findOutfit(power: number, buyItem: boolean) {
 
   for (const slot of relevantSlots) {
     const item = outfit[slot];
-    if(item === Item.none) continue;
+    if (item === Item.none) continue;
     if (have_(item)) continue;
     if (!buy(item)) {
       logger.debug(`Failed to purchase ${item}`);
