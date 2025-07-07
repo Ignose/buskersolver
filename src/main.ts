@@ -1,6 +1,6 @@
 import { Args } from "grimoire-kolmafia";
 import { Effect, Modifier, print, toEffect, toModifier } from "kolmafia";
-import { $effects, get, NumericModifier, sinceKolmafiaRevision } from "libram";
+import { $effects, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
 import { findOptimalOutfitPower } from "./utils2";
 import {
   hybridEffectValuer,
@@ -25,6 +25,10 @@ export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   uselesseffects: Args.string({
     help: `Effects that aren't helpful for you, for instance uselesseffects="Leash of Linguini, Empathy, Thoughtful Empathy"`,
     default: "",
+  }),
+  uniqueeffects: Args.flag({
+    help: `Only value effects you don't already have`,
+    default: false,
   }),
   allbusks: Args.flag({
     help: `Set allbusks to "true" to check all busk levels; default behavior is only to test available busks`,
@@ -92,6 +96,10 @@ export function main(command?: string): void {
   }
 
   const uselesseffects = parseEffects(args.uselesseffects);
+  if (args.uniqueeffects) {
+    uselesseffects.push(...Effect.all().filter((e) => have(e)));
+  }
+
   const startUses = args.allbusks ? 0 : get("_beretBuskingUses", 0);
   const buskRange =
     args.busk !== undefined
