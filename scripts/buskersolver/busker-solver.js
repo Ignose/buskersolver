@@ -7441,6 +7441,10 @@ function main_slicedToArray(arr, i) { return main_arrayWithHoles(arr) || main_it
 function main_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function main_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function main_arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+function main_toConsumableArray(arr) { return main_arrayWithoutHoles(arr) || main_iterableToArray(arr) || main_unsupportedIterableToArray(arr) || main_nonIterableSpread(); }
+function main_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function main_iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function main_arrayWithoutHoles(arr) { if (Array.isArray(arr)) return main_arrayLikeToArray(arr); }
 function main_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 function main_createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = main_unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 function main_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return main_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return main_arrayLikeToArray(o, minLen); }
@@ -7466,6 +7470,10 @@ var main_args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   uselesseffects: Args.string({
     help: "Effects that aren't helpful for you, for instance uselesseffects=\"Leash of Linguini, Empathy, Thoughtful Empathy\"",
     default: ""
+  }),
+  uniqueeffects: Args.flag({
+    help: "Only value effects you don't already have",
+    default: false
   }),
   allbusks: Args.flag({
     help: "Set allbusks to \"true\" to check all busk levels; default behavior is only to test available busks",
@@ -7530,6 +7538,9 @@ function main(command) {
     othermodifiers = true;
   }
   var uselesseffects = parseEffects(main_args.uselesseffects);
+  if (main_args.uniqueeffects) {
+    uselesseffects.push.apply(uselesseffects, main_toConsumableArray(external_kolmafia_namespaceObject.Effect.all().filter(e => lib_have(e))));
+  }
   var startUses = main_args.allbusks ? 0 : property_get("_beretBuskingUses", 0);
   var buskRange = main_args.busk !== undefined ? [main_args.busk - 1] : Array.from({
     length: 5 - startUses
