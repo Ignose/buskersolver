@@ -42,6 +42,7 @@ __webpack_require__.d(__webpack_exports__, {
   args: () => (/* binding */ args),
   checkhatrack: () => (/* binding */ checkhatrack),
   hammertime: () => (/* binding */ hammertime),
+  inHatPath: () => (/* binding */ inHatPath),
   main: () => (/* binding */ main),
   othermodifiers: () => (/* binding */ othermodifiers)
 });
@@ -6885,7 +6886,7 @@ function sinceKolmafiaVersion(majorVersion, minorVersion) {
   }
 }
 ;// ./src/utils.ts
-var utils_templateObject, utils_templateObject2, utils_templateObject3, utils_templateObject4, utils_templateObject5, utils_templateObject6, utils_templateObject7, utils_templateObject8, utils_templateObject9, utils_templateObject10, utils_templateObject11, utils_templateObject12, utils_templateObject13, utils_templateObject14, utils_templateObject15, utils_templateObject16, utils_templateObject17, utils_templateObject18, utils_templateObject19;
+var utils_templateObject, utils_templateObject2, utils_templateObject3, utils_templateObject4, utils_templateObject5, utils_templateObject6, utils_templateObject7, utils_templateObject8, utils_templateObject9, utils_templateObject10, utils_templateObject11, utils_templateObject12, utils_templateObject13, utils_templateObject14, utils_templateObject15, utils_templateObject16, utils_templateObject17, utils_templateObject18, utils_templateObject19, utils_templateObject20, utils_templateObject21;
 function utils_toConsumableArray(arr) { return utils_arrayWithoutHoles(arr) || utils_iterableToArray(arr) || src_utils_unsupportedIterableToArray(arr) || utils_nonIterableSpread(); }
 function utils_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function utils_iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
@@ -6901,12 +6902,15 @@ function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.s
 
 
 
+var hatTrickHats = inHatPath ? external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["Hat"]))) && (0,external_kolmafia_namespaceObject.haveEquipped)(i)) : [];
+var pathHatPower = hatTrickHats.length > 1 ? hatTrickHats.reduce((total, hat) => total + (0,external_kolmafia_namespaceObject.getPower)(hat), 0) * multipliers($slot(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["hat"])))) : 0;
+
 // eslint-disable-next-line libram/verify-constants
-var beret = template_string_$item(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["prismatic beret"])));
+var beret = template_string_$item(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["prismatic beret"])));
 function multipliers(slot) {
-  var taoMultiplier = have(template_string_$skill(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
-  var hammertimeMultiplier = have(template_string_$effect(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["Hammertime"])))) || hammertime ? 3 : 0;
-  return slot === $slot(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Shirt"]))) ? 1 : slot === $slot(utils_templateObject5 || (utils_templateObject5 = utils_taggedTemplateLiteral(["Hat"]))) ? taoMultiplier : slot === $slot(utils_templateObject6 || (utils_templateObject6 = utils_taggedTemplateLiteral(["Pants"]))) ? taoMultiplier + hammertimeMultiplier : 0;
+  var taoMultiplier = have(template_string_$skill(utils_templateObject4 || (utils_templateObject4 = utils_taggedTemplateLiteral(["Tao of the Terrapin"])))) ? 2 : 1;
+  var hammertimeMultiplier = have(template_string_$effect(utils_templateObject5 || (utils_templateObject5 = utils_taggedTemplateLiteral(["Hammertime"])))) || hammertime ? 3 : 0;
+  return slot === $slot(utils_templateObject6 || (utils_templateObject6 = utils_taggedTemplateLiteral(["Shirt"]))) ? 1 : slot === $slot(utils_templateObject7 || (utils_templateObject7 = utils_taggedTemplateLiteral(["Hat"]))) ? taoMultiplier : slot === $slot(utils_templateObject8 || (utils_templateObject8 = utils_taggedTemplateLiteral(["Pants"]))) ? taoMultiplier + hammertimeMultiplier : 0;
 }
 function printBuskResult(result, modifiers) {
   var desiredEffects = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
@@ -6920,7 +6924,7 @@ function printBuskResult(result, modifiers) {
   var bestBusks = result.busks.sort((a, b) => a.buskIndex - b.buskIndex);
 
   // Define a set of other useful modifiers to show if args.othermodifiers is true
-  var otherModifiersList = [$modifier(utils_templateObject7 || (utils_templateObject7 = utils_taggedTemplateLiteral(["Item Drop"]))), $modifier(utils_templateObject8 || (utils_templateObject8 = utils_taggedTemplateLiteral(["Meat Drop"]))), $modifier(utils_templateObject9 || (utils_templateObject9 = utils_taggedTemplateLiteral(["Familiar Weight"]))), $modifier(utils_templateObject10 || (utils_templateObject10 = utils_taggedTemplateLiteral(["Familiar Experience"])))];
+  var otherModifiersList = [$modifier(utils_templateObject9 || (utils_templateObject9 = utils_taggedTemplateLiteral(["Item Drop"]))), $modifier(utils_templateObject10 || (utils_templateObject10 = utils_taggedTemplateLiteral(["Meat Drop"]))), $modifier(utils_templateObject11 || (utils_templateObject11 = utils_taggedTemplateLiteral(["Familiar Weight"]))), $modifier(utils_templateObject12 || (utils_templateObject12 = utils_taggedTemplateLiteral(["Familiar Experience"])))];
   var _iterator = src_utils_createForOfIteratorHelper(bestBusks),
     _step;
   try {
@@ -7115,9 +7119,9 @@ function utils_have() {
 function getUseableClothes() {
   var buyItem = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
   var availableItems = external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.canEquip)(i) && (have(i) || buyItem && (0,external_kolmafia_namespaceObject.npcPrice)(i) > 0));
-  var useableHats = have(template_string_$familiar(utils_templateObject11 || (utils_templateObject11 = utils_taggedTemplateLiteral(["Mad Hatrack"])))) || checkhatrack ? [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject12 || (utils_templateObject12 = utils_taggedTemplateLiteral(["hat"]))))), [template_string_$item.none]) : [beret];
-  var useablePants = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject13 || (utils_templateObject13 = utils_taggedTemplateLiteral(["pants"]))))), [template_string_$item.none]);
-  var useableShirts = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject14 || (utils_templateObject14 = utils_taggedTemplateLiteral(["shirt"]))))), [template_string_$item.none]);
+  var useableHats = have(template_string_$familiar(utils_templateObject13 || (utils_templateObject13 = utils_taggedTemplateLiteral(["Mad Hatrack"])))) || checkhatrack ? [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject14 || (utils_templateObject14 = utils_taggedTemplateLiteral(["hat"]))) && (inHatPath ? !(0,external_kolmafia_namespaceObject.haveEquipped)(i) : true))), [template_string_$item.none]) : [beret];
+  var useablePants = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject15 || (utils_templateObject15 = utils_taggedTemplateLiteral(["pants"]))))), [template_string_$item.none]);
+  var useableShirts = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject16 || (utils_templateObject16 = utils_taggedTemplateLiteral(["shirt"]))))), [template_string_$item.none]);
   return {
     useableHats: useableHats,
     useablePants: useablePants,
@@ -7129,8 +7133,8 @@ function availablePowersums(buyItem) {
     useableHats = _getUseableClothes.useableHats,
     useablePants = _getUseableClothes.useablePants,
     useableShirts = _getUseableClothes.useableShirts;
-  var hatPowers = utils_toConsumableArray(new Set(useableHats.map(i => multipliers($slot(utils_templateObject15 || (utils_templateObject15 = utils_taggedTemplateLiteral(["Hat"])))) * (0,external_kolmafia_namespaceObject.getPower)(i))));
-  var pantPowers = utils_toConsumableArray(new Set(useablePants.map(i => multipliers($slot(utils_templateObject16 || (utils_templateObject16 = utils_taggedTemplateLiteral(["Pants"])))) * (0,external_kolmafia_namespaceObject.getPower)(i))));
+  var hatPowers = utils_toConsumableArray(new Set(useableHats.map(i => multipliers($slot(utils_templateObject17 || (utils_templateObject17 = utils_taggedTemplateLiteral(["Hat"])))) * (0,external_kolmafia_namespaceObject.getPower)(i))));
+  var pantPowers = utils_toConsumableArray(new Set(useablePants.map(i => multipliers($slot(utils_templateObject18 || (utils_templateObject18 = utils_taggedTemplateLiteral(["Pants"])))) * (0,external_kolmafia_namespaceObject.getPower)(i))));
   var shirtPowers = utils_toConsumableArray(new Set(useableShirts.map(i => (0,external_kolmafia_namespaceObject.getPower)(i))));
   return utils_toConsumableArray(new Set(hatPowers.flatMap(hat => pantPowers.flatMap(pant => shirtPowers.flatMap(shirt => hat + pant + shirt)))));
 }
@@ -7240,9 +7244,9 @@ function findOutfit(power, buyItem) {
     useableHats = _getUseableClothes2.useableHats,
     useablePants = _getUseableClothes2.useablePants,
     useableShirts = _getUseableClothes2.useableShirts;
-  var hatPowers = populateMap(useableHats, power, multipliers($slot(utils_templateObject17 || (utils_templateObject17 = utils_taggedTemplateLiteral(["Hat"])))));
-  var pantsPowers = populateMap(useablePants, power, multipliers($slot(utils_templateObject18 || (utils_templateObject18 = utils_taggedTemplateLiteral(["Pants"])))));
-  var shirtPowers = populateMap(useableShirts, power, multipliers($slot(utils_templateObject19 || (utils_templateObject19 = utils_taggedTemplateLiteral(["Shirt"])))));
+  var hatPowers = populateMap(useableHats, power, multipliers($slot(utils_templateObject19 || (utils_templateObject19 = utils_taggedTemplateLiteral(["Hat"])))));
+  var pantsPowers = populateMap(useablePants, power, multipliers($slot(utils_templateObject20 || (utils_templateObject20 = utils_taggedTemplateLiteral(["Pants"])))));
+  var shirtPowers = populateMap(useableShirts, power, multipliers($slot(utils_templateObject21 || (utils_templateObject21 = utils_taggedTemplateLiteral(["Shirt"])))));
   var outfits = utils_toConsumableArray(hatPowers).flatMap(_ref23 => {
     var _ref24 = utils_slicedToArray(_ref23, 2),
       hatPower = _ref24[0],
@@ -7255,7 +7259,7 @@ function findOutfit(power, buyItem) {
         var _ref28 = utils_slicedToArray(_ref27, 2),
           shirtPower = _ref28[0],
           shirt = _ref28[1];
-        return hatPower + pantsPower + shirtPower === power ? {
+        return hatPower + pantsPower + shirtPower + pathHatPower === power ? {
           hat: hat,
           pants: pants,
           shirt: shirt
@@ -7288,7 +7292,7 @@ function findOutfit(power, buyItem) {
   return outfit;
 }
 ;// ./src/main.ts
-var main_templateObject;
+var main_templateObject, main_templateObject2;
 function main_slicedToArray(arr, i) { return main_arrayWithHoles(arr) || main_iterableToArrayLimit(arr, i) || main_unsupportedIterableToArray(arr, i) || main_nonIterableRest(); }
 function main_nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function main_iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
@@ -7297,14 +7301,15 @@ function main_toConsumableArray(arr) { return main_arrayWithoutHoles(arr) || mai
 function main_nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function main_iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
 function main_arrayWithoutHoles(arr) { if (Array.isArray(arr)) return main_arrayLikeToArray(arr); }
-function main_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 function main_createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = main_unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 function main_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return main_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return main_arrayLikeToArray(o, minLen); }
 function main_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+function main_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
 
 
 
+var inHatPath = (0,external_kolmafia_namespaceObject.myPath)() === $path(main_templateObject || (main_templateObject = main_taggedTemplateLiteral(["Hat Trick"])));
 var args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   modifiers: Args.string({
     help: "Numeric Modifiers to check; these can be singular like modifiers=\"Meat Drop\", multiple like modifiers=\"Meat Drop, Familiar Weight\" or weighted like modifiers=\"5 Meat Drop, 10 Familiar Weight\"",
@@ -7374,7 +7379,7 @@ function parseWeightedModifiers(input) {
 }
 function parseEffects(input) {
   var effectList = input.split(",").map(entry => (0,external_kolmafia_namespaceObject.toEffect)(entry.trim())).filter(e => e !== null); // Remove invalid entries
-  return effectList.length > 0 ? effectList : $effects(main_templateObject || (main_templateObject = main_taggedTemplateLiteral([""])));
+  return effectList.length > 0 ? effectList : $effects(main_templateObject2 || (main_templateObject2 = main_taggedTemplateLiteral([""])));
 }
 function main(command) {
   sinceKolmafiaRevision(28549);
