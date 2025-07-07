@@ -30,6 +30,7 @@ import {
   sum,
 } from "libram";
 import { normalizeEffectValuer } from "./utils";
+import { hammertime } from "./main";
 
 // eslint-disable-next-line libram/verify-constants
 const beret = $item`prismatic beret`;
@@ -64,11 +65,12 @@ function getUseableClothes(buyItem = true): {
 
 function availablePowersums(buyItem: boolean): number[] {
   const taoMultiplier = have_($skill`Tao of the Terrapin`) ? 2 : 1;
+  const hammerTimeMultiplier = have_($effect`Hammertime`) || hammertime ? 3 : 0;
 
   const { useableHats, useablePants, useableShirts } = getUseableClothes(buyItem);
 
   const hatPowers = [...new Set(useableHats.map((i) => taoMultiplier * getPower(i)))];
-  const pantPowers = [...new Set(useablePants.map((i) => taoMultiplier * getPower(i)))];
+  const pantPowers = [...new Set(useablePants.map((i) => (taoMultiplier + hammerTimeMultiplier) * getPower(i)))];
   const shirtPowers = [...new Set(useableShirts.map((i) => getPower(i)))];
 
   return [

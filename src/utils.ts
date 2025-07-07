@@ -147,6 +147,10 @@ export function printBuskResult(
       print(`Other Effects: ${otherEffects.map((e) => e.name).join(", ")}`);
     }
 
+    const bestOutfit = reconstructOutfit(daRaw);
+
+    print(`Outfit: Hat  ${bestOutfit.hat},  Shirt  ${bestOutfit.shirt},  Pants  ${bestOutfit.pants}`)
+
     print(""); // Blank line between busks
   }
 }
