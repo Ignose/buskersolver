@@ -1,19 +1,32 @@
 import { Args } from "grimoire-kolmafia";
-import { Effect, print, toEffect, toModifier } from "kolmafia";
+import { Effect, Modifier, print, toEffect, toModifier } from "kolmafia";
 import { $effects, get, NumericModifier, sinceKolmafiaRevision } from "libram";
 import { findOptimalOutfitPower } from "./utils2";
-import { makeBuskResultFromPowers, printBuskResult } from "./utils";
+import {
+  hybridEffectValuer,
+  makeBuskResultFromPowers,
+  normalizeEffectValuer,
+  printBuskResult,
+} from "./utils";
 
 export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   modifiers: Args.string({
     help: `Numeric Modifiers to check; these can be singular like modifiers="Meat Drop", multiple like modifiers="Meat Drop, Familiar Weight" or weighted like modifiers="5 Meat Drop, 10 Familiar Weight"`,
-    default: "Meat Drop",
+    default: Modifier.none.name,
+  }),
+  effects: Args.string({
+    help: `Effects that you want to prioritize, for instance effects="Salty Mouth" will look for busks that grant Salty Mouth`,
+    default: Effect.none.name,
+  }),
+  othermodifiers: Args.boolean({
+    help: `Set allbusks to "true" to detail bonuses to other modifiers like Item Drop, Meat Drop, etc. even if not weighted`,
+    default: false,
   }),
   uselesseffects: Args.string({
     help: `Effects that aren't helpful for you, for instance uselesseffects="Leash of Linguini, Empathy, Thoughtful Empathy"`,
     default: "",
   }),
-  allbusks: Args.boolean({
+  allbusks: Args.flag({
     help: `Set allbusks to "true" to check all busk levels; default behavior is only to test available busks`,
     default: false,
   }),
@@ -31,10 +44,9 @@ export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
 });
 
 export let checkhatrack = false;
+export let othermodifiers = false;
 
-function parseWeightedModifiers(
-  input: string
-): Partial<Record<NumericModifier, number>> {
+function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, number>> {
   if (!input.trim()) return {};
 
   const result: Partial<Record<NumericModifier, number>> = {};
@@ -75,27 +87,46 @@ export function main(command?: string): void {
     checkhatrack = true;
   }
 
+  if (args.othermodifiers) {
+    othermodifiers = true;
+  }
 
-  const weightedModifiers = parseWeightedModifiers(args.modifiers);
   const uselesseffects = parseEffects(args.uselesseffects);
-
   const startUses = args.allbusks ? 0 : get("_beretBuskingUses", 0);
-  const buskRange = args.busk !== undefined ? [args.busk - 1] : Array.from({ length: 5 - startUses }, (_, i) => startUses + i);
+  const buskRange =
+    args.busk !== undefined
+      ? [args.busk - 1]
+      : Array.from({ length: 5 - startUses }, (_, i) => startUses + i);
 
-  const bestPowers = buskRange.map((buskUses) =>
-    findOptimalOutfitPower(weightedModifiers, buskUses, uselesseffects, true)
-  );
+  if (args.effects !== Effect.none.name && args.modifiers !== Modifier.none.name) {
+    const desiredEffects = parseEffects(args.effects);
+    const weightedModifiers = parseWeightedModifiers(args.modifiers);
 
-  const result = makeBuskResultFromPowers(bestPowers, weightedModifiers, uselesseffects, startUses);
+    const valuerFn = normalizeEffectValuer(hybridEffectValuer(desiredEffects, weightedModifiers));
 
+    const bestPowers = buskRange.map((buskUses) =>
+      findOptimalOutfitPower(valuerFn, buskUses, uselesseffects, true)
+    );
 
-  print(
-    `DEBUG: Parsed modifiers = ${Object.entries(weightedModifiers)
-      .map(([m, w]) => `${w}×${m}`)
-      .join(", ")}`
-  );
-  printBuskResult(
-    result,
-    Object.keys(weightedModifiers).map((mod) => toModifier(mod))
-  );
+    const result = makeBuskResultFromPowers(
+      bestPowers,
+      weightedModifiers,
+      uselesseffects,
+      startUses
+    );
+
+    print(
+      `Hybrid strategy: prioritizing effects [${desiredEffects
+        .map((e) => e.name)
+        .join(", ")}], fallback modifiers [${Object.entries(weightedModifiers)
+        .map(([m, w]) => `${w}×${m}`)
+        .join(", ")}]`
+    );
+
+    printBuskResult(
+      result,
+      Object.keys(weightedModifiers).map((mod) => toModifier(mod)),
+      desiredEffects
+    );
+  }
 }
