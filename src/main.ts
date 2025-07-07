@@ -9,7 +9,7 @@ import {
   printBuskResult,
 } from "./utils";
 
-export const inHatPath = myPath() === $path`Hat Trick`
+export const inHatPath = myPath() === $path`Hat Trick`;
 
 export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   modifiers: Args.string({

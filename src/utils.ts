@@ -43,8 +43,11 @@ export interface BuskResult {
   busks: Busk[];
 }
 
-const hatTrickHats = inHatPath ? Item.all().filter((i) => toSlot(i) === $slot`Hat` && haveEquipped(i)) : [];
-const pathHatPower = hatTrickHats.length > 1
+const hatTrickHats = inHatPath
+  ? Item.all().filter((i) => toSlot(i) === $slot`Hat` && haveEquipped(i))
+  : [];
+const pathHatPower =
+  hatTrickHats.length > 1
     ? hatTrickHats.reduce((total, hat) => total + getPower(hat), 0) * multipliers($slot`hat`)
     : 0;
 
@@ -250,7 +253,12 @@ function getUseableClothes(buyItem = true): {
   );
   const useableHats =
     have_($familiar`Mad Hatrack`) || checkhatrack
-      ? [...availableItems.filter((i) => toSlot(i) === $slot`hat` && (inHatPath ? !haveEquipped(i) : true)), $item.none]
+      ? [
+          ...availableItems.filter(
+            (i) => toSlot(i) === $slot`hat` && (inHatPath ? !haveEquipped(i) : true)
+          ),
+          $item.none,
+        ]
       : [beret];
   const useablePants = [...availableItems.filter((i) => toSlot(i) === $slot`pants`), $item.none];
   const useableShirts = [...availableItems.filter((i) => toSlot(i) === $slot`shirt`), $item.none];
