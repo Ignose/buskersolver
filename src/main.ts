@@ -1,6 +1,6 @@
 import { Args } from "grimoire-kolmafia";
-import { Effect, Modifier, print, toEffect, toModifier } from "kolmafia";
-import { $effects, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
+import { Effect, Modifier, myPath, print, toEffect, toModifier } from "kolmafia";
+import { $effects, $path, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
 import {
   findOptimalOutfitPower,
   hybridEffectValuer,
@@ -8,6 +8,8 @@ import {
   normalizeEffectValuer,
   printBuskResult,
 } from "./utils";
+
+export const inHatPath = myPath() === $path`Hat Trick`
 
 export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   modifiers: Args.string({

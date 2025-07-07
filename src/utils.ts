@@ -4,6 +4,7 @@ import {
   canEquip,
   Effect,
   getPower,
+  haveEquipped,
   Item,
   Modifier,
   myMeat,
@@ -28,7 +29,7 @@ import {
   NumericModifier,
   sum,
 } from "libram";
-import { checkhatrack, hammertime, othermodifiers } from "./main";
+import { checkhatrack, hammertime, inHatPath, othermodifiers } from "./main";
 
 export interface Busk {
   effects: Effect[];
@@ -41,6 +42,11 @@ export interface BuskResult {
   score: number;
   busks: Busk[];
 }
+
+const hatTrickHats = inHatPath ? Item.all().filter((i) => toSlot(i) === $slot`Hat` && haveEquipped(i)) : [];
+const pathHatPower = hatTrickHats.length > 1
+    ? hatTrickHats.reduce((total, hat) => total + getPower(hat), 0) * multipliers($slot`hat`)
+    : 0;
 
 // eslint-disable-next-line libram/verify-constants
 const beret = $item`prismatic beret`;
@@ -244,7 +250,7 @@ function getUseableClothes(buyItem = true): {
   );
   const useableHats =
     have_($familiar`Mad Hatrack`) || checkhatrack
-      ? [...availableItems.filter((i) => toSlot(i) === $slot`hat`), $item.none]
+      ? [...availableItems.filter((i) => toSlot(i) === $slot`hat` && (inHatPath ? !haveEquipped(i) : true)), $item.none]
       : [beret];
   const useablePants = [...availableItems.filter((i) => toSlot(i) === $slot`pants`), $item.none];
   const useableShirts = [...availableItems.filter((i) => toSlot(i) === $slot`shirt`), $item.none];
@@ -388,7 +394,7 @@ export function findOutfit(power: number, buyItem: boolean) {
   const outfits = [...hatPowers].flatMap(([hatPower, hat]) =>
     [...pantsPowers].flatMap(([pantsPower, pants]) =>
       [...shirtPowers].flatMap(([shirtPower, shirt]) =>
-        hatPower + pantsPower + shirtPower === power ? { hat, pants, shirt } : []
+        hatPower + pantsPower + shirtPower + pathHatPower === power ? { hat, pants, shirt } : []
       )
     )
   );
