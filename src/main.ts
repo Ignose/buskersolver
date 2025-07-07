@@ -1,8 +1,8 @@
 import { Args } from "grimoire-kolmafia";
 import { Effect, Modifier, print, toEffect, toModifier } from "kolmafia";
 import { $effects, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
-import { findOptimalOutfitPower } from "./utils2";
 import {
+  findOptimalOutfitPower,
   hybridEffectValuer,
   makeBuskResultFromPowers,
   normalizeEffectValuer,

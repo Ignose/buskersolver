@@ -1,13 +1,16 @@
 import {
   beretBuskingEffects,
+  buy,
   canEquip,
   Effect,
   getPower,
   Item,
   Modifier,
+  myMeat,
   npcPrice,
   numericModifier,
   print,
+  Slot,
   toEffect,
   toSlot,
 } from "kolmafia";
@@ -19,12 +22,13 @@ import {
   $skill,
   $slot,
   get,
-  have,
+  have as have_,
+  logger,
+  maxBy,
   NumericModifier,
   sum,
 } from "libram";
-import { args, checkhatrack, othermodifiers } from "./main";
-import { EffectValuer, scoreBusk } from "./utils2";
+import { checkhatrack, hammertime, othermodifiers } from "./main";
 
 export interface Busk {
   effects: Effect[];
@@ -41,30 +45,11 @@ export interface BuskResult {
 // eslint-disable-next-line libram/verify-constants
 const beret = $item`prismatic beret`;
 
-function multipliers(): [number, number] {
-  const taoHatMultiplier = have($skill`Tao of the Terrapin`) ? 2 : 1;
-  const taoPantsMultiplier = have($skill`Tao of the Terrapin`) ? 1 : 0;
-  const hammerTimeMultiplier = have($effect`Hammertime`) || args.checkhammertime ? 3 : 0;
-  const totalPantsMultiplier = 1 + hammerTimeMultiplier + taoPantsMultiplier;
+function multipliers(slot: Slot): number {
+  const taoMultiplier = have_($skill`Tao of the Terrapin`) ? 2 : 1;
+  const hammertimeMultiplier = have_($effect`Hammertime`) || hammertime ? 3 : 0;
 
-  return [taoHatMultiplier, totalPantsMultiplier];
-}
-
-export function reconstructOutfit(daRaw: number): { hat?: Item; shirt?: Item; pants?: Item } {
-  for (const hat of allHats()) {
-    const hatPower = multipliers()[0] * getPower(hat);
-    for (const shirt of allShirts) {
-      const shirtPower = getPower(shirt);
-      for (const pants of allPants) {
-        const pantsPower = multipliers()[1] * getPower(pants);
-        if (shirtPower + hatPower + pantsPower === daRaw) {
-          return { hat, shirt, pants };
-        }
-      }
-    }
-  }
-
-  return {};
+  return slot === $slot`Shirt` ? 1 : slot === $slot`Hat` ? taoMultiplier : slot === $slot`Pants` ? taoMultiplier + hammertimeMultiplier : 0;
 }
 
 export function printBuskResult(
@@ -147,9 +132,16 @@ export function printBuskResult(
       print(`Other Effects: ${otherEffects.map((e) => e.name).join(", ")}`);
     }
 
-    const bestOutfit = reconstructOutfit(daRaw);
+    const bestOutfit = findOutfit(daRaw, true);
+    if(bestOutfit === null) {
+      print("No viable outfit found, something went horribly wrong!");
+    } else {
+      const hat = bestOutfit.hat !== null ? bestOutfit.hat : Item.none;
+      const shirt = bestOutfit.shirt !== null ? bestOutfit.shirt : Item.none;
+      const pants = bestOutfit.pants !== null ? bestOutfit.pants : Item.none;
 
-    print(`Outfit: Hat  ${bestOutfit.hat},  Shirt  ${bestOutfit.shirt},  Pants  ${bestOutfit.pants}`)
+      print(`Outfit: Hat -  ${hat},  Shirt -  ${shirt},  Pants -  ${pants}`);
+    }
 
     print(""); // Blank line between busks
   }
@@ -187,49 +179,6 @@ export function makeBuskResultFromPowers(
   };
 }
 
-const allItems = Item.all().filter((i) => have(i) && canEquip(i));
-const shopItems = Item.all().filter((i) => npcPrice(i) > 0 && canEquip(i));
-allItems.push(...shopItems);
-const allHats = () =>
-  have($familiar`Mad Hatrack`) || checkhatrack
-    ? allItems.filter((i) => toSlot(i) === $slot`hat`)
-    : [beret];
-const allPants = allItems.filter((i) => toSlot(i) === $slot`pants`);
-const allShirts = allItems.filter((i) => toSlot(i) === $slot`shirt`);
-
-export function printOutfit(hat?: Item, shirt?: Item, pants?: Item): void {
-  print(
-    `  - Equipment: Hat = ${hat?.name ?? "?"}, Shirt = ${shirt?.name ?? "?"}, Pants = ${
-      pants?.name ?? "?"
-    }`
-  );
-}
-
-export function printDesiredEffectsResult(
-  powers: number[],
-  desiredEffects: Effect[],
-  buskStartIndex = get("_beretBuskingUses", 0)
-): void {
-  for (let i = 0; i < powers.length; i++) {
-    const power = powers[i];
-    const buskIndex = buskStartIndex + i;
-
-    const rawEffects = beretBuskingEffects(power, buskIndex);
-    const buskEffects = Object.entries(rawEffects)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .map(([name, dur]) => toEffect(name))
-      .filter((e) => e !== $effect.none);
-
-    const match = buskEffects.some((e) => desiredEffects.includes(e));
-    if (!match) continue;
-
-    const { hat, shirt, pants } = reconstructOutfit(power);
-    print(`Power ${power} Busk ${buskIndex + 1}`);
-    printOutfit(hat, shirt, pants);
-    print(""); // spacing
-  }
-}
-
 export function hybridEffectValuer(
   desiredEffects: Effect[],
   weightedModifiers: Partial<Record<NumericModifier, number>>
@@ -265,4 +214,191 @@ export function normalizeEffectValuer(
         ([modifier, weight]) => weight * numericModifier(effect, modifier)
       );
   }
+}
+
+export type EffectValuer =
+  | Partial<Record<NumericModifier, number>>
+  | ((effect: Effect, duration: number) => number)
+  | Effect[];
+
+/**
+ * @returns Whether or not you have the prismatic beret
+ */
+export function have(): boolean {
+  return have_(beret);
+}
+
+function getUseableClothes(buyItem = true): {
+  useableHats: Item[];
+  useablePants: Item[];
+  useableShirts: Item[];
+} {
+  const availableItems = Item.all().filter(
+    (i) => canEquip(i) && (have_(i) || (buyItem && npcPrice(i) > 0))
+  );
+  const useableHats = have_($familiar`Mad Hatrack`) || checkhatrack
+    ? [...availableItems.filter((i) => toSlot(i) === $slot`hat`), $item.none]
+    : [beret];
+  const useablePants = [...availableItems.filter((i) => toSlot(i) === $slot`pants`), $item.none];
+  const useableShirts = [...availableItems.filter((i) => toSlot(i) === $slot`shirt`), $item.none];
+  return { useableHats, useablePants, useableShirts };
+}
+
+function availablePowersums(buyItem: boolean): number[] {
+
+  const { useableHats, useablePants, useableShirts } = getUseableClothes(buyItem);
+
+  const hatPowers = [...new Set(useableHats.map((i) => multipliers($slot`Hat`) * getPower(i)))];
+  const pantPowers = [...new Set(useablePants.map((i) => multipliers($slot`Pants`)  * getPower(i)))];
+  const shirtPowers = [...new Set(useableShirts.map((i) => getPower(i)))];
+
+  return [
+    ...new Set(
+      hatPowers.flatMap((hat) =>
+        pantPowers.flatMap((pant) => shirtPowers.flatMap((shirt) => hat + pant + shirt))
+      )
+    ),
+  ];
+}
+
+export function scoreBusk(
+  effects: [Effect, number][],
+  effectValuer: (effect: Effect, duration: number, all?: [Effect, number][]) => number,
+  uselessEffects: Set<Effect>
+): number {
+  const useful = effects.filter(([e]) => !uselessEffects.has(e));
+  return sum(useful, ([e, dur]) => effectValuer(e, dur, effects));
+}
+
+/**
+ * Calculate the optimal power-sum at which to busk, given a weighted set of modifiers.
+ * @param wantedEffects An array of Effects we care about; maximizes the number of those effects we end up with
+ * @param buskUses How many busks should we assume we've cast? Defaults to the current number.
+ * @param uselessEffects An array (defaults to empty) of effects not to consider for the purposes of busk valuation
+ * @param buyItem Whether or not we should consider purchasing items from NPC stores; defaults to true
+ * @returns The power-sum at which you'll find the optimal busk for this situation.
+ */
+export function findOptimalOutfitPower(
+  wantedEffects: Effect[],
+  buskUses?: number,
+  uselessEffects?: Effect[],
+  buyItem?: boolean
+): number;
+/**
+ * Calculate the optimal power-sum at which to busk, given a weighted set of modifiers.
+ * @param weightedModifiers An object keyed by Numeric Modifiers, with their values representing weights
+ * @param buskUses How many busks should we assume we've cast? Defaults to the current number.
+ * @param uselessEffects An array (defaults to empty) of effects not to consider for the purposes of busk valuation
+ * @param buyItem Whether or not we should consider purchasing items from NPC stores; defaults to true
+ * @returns The power-sum at which you'll find the optimal busk for this situation.
+ */
+export function findOptimalOutfitPower(
+  weightedModifiers: Partial<Record<NumericModifier, number>>,
+  buskUses?: number,
+  uselessEffects?: Effect[],
+  buyItem?: boolean
+): number;
+/**
+ * Calculate the optimal power-sum at which to busk, given a weighted set of modifiers.
+ * @param valueFunction A function that maps effects to values
+ * @param buskUses How many busks should we assume we've cast? Defaults to the current number.
+ * @param uselessEffects An array (defaults to empty) of effects not to consider for the purposes of busk valuation
+ * @param buyItem Whether or not we should consider purchasing items from NPC stores; defaults to true
+ * @returns The power-sum at which you'll find the optimal busk for this situation.
+ */
+export function findOptimalOutfitPower(
+  valueFunction: (effect: Effect, duration: number) => number,
+  buskUses?: number,
+  uselessEffects?: Effect[],
+  buyItem?: boolean
+): number;
+/**
+ * Calculate the optimal power-sum at which to busk, given a weighted set of modifiers.
+ * @param effectValuer Either a function that maps effect-duration pairs to values, or an object keyed by numeric modifiers with weights as values, or an array of desired effects
+ * @param buskUses How many busks should we assume we've cast? Defaults to the current number.
+ * @param uselessEffects An array (defaults to empty) of effects not to consider for the purposes of busk valuation
+ * @param buyItem Whether or not we should consider purchasing items from NPC stores; defaults to true
+ * @returns The power-sum at which you'll find the optimal busk for this situation.
+ */
+export function findOptimalOutfitPower(
+  effectValuer: EffectValuer,
+  buskUses?: number,
+  uselessEffects?: Effect[],
+  buyItem?: boolean
+): number;
+/**
+ * Calculate the optimal power-sum at which to busk, given a weighted set of modifiers.
+ * @param effectValuer Either a function that maps effect-duration pairs to values, or an object keyed by numeric modifiers with weights as values, or an array of desired effects
+ * @param buskUses How many busks should we assume we've cast? Defaults to the current number.
+ * @param uselessEffects An array (defaults to empty) of effects not to consider for the purposes of busk valuation
+ * @param buyItem Whether or not we should consider purchasing items from NPC stores; defaults to true
+ * @returns The power-sum at which you'll find the optimal busk for this situation.
+ */
+export function findOptimalOutfitPower(
+  effectValuer: EffectValuer,
+  buskUses = get("_beretBuskingUses", 0),
+  uselessEffects: Effect[] = [],
+  buyItem = true
+): number {
+  const valuerFn = normalizeEffectValuer(effectValuer);
+  const uselessEffectSet = new Set(uselessEffects);
+  const powersums = availablePowersums(buyItem);
+  if (!powersums.length) return 0;
+  return maxBy(powersums, (power) =>
+    scoreBusk(
+      Object.entries(beretBuskingEffects(power, buskUses))
+        .map(([effect, duration]): [Effect, number] => [toEffect(effect), duration])
+        .filter(([e]) => e !== $effect.none),
+      valuerFn,
+      uselessEffectSet
+    )
+  );
+}
+
+const populateMap = (arr: Item[], max: number, double: number) => {
+  const map = new Map<number, Item>();
+  for (const it of arr) {
+    const power = getPower(it) * (double);
+    if (power > max) continue;
+
+    const existing = map.get(power);
+    if (!existing || (!have_(existing) && (have_(it) || npcPrice(it) < npcPrice(existing)))) {
+      map.set(power, it);
+    }
+  }
+  return map;
+};
+const relevantSlots = ["hat", "pants", "shirt"] as const;
+const functionalPrice = (item: Item) => (have_(item) || item === Item.none ? 0 : npcPrice(item));
+const outfitPrice = (outfit: { hat: Item; pants: Item; shirt: Item }) =>
+  sum(relevantSlots, (slot) => functionalPrice(outfit[slot]));
+
+export function findOutfit(power: number, buyItem: boolean) {
+  const { useableHats, useablePants, useableShirts } = getUseableClothes(buyItem);
+  const hatPowers = populateMap(useableHats, power, multipliers($slot`Hat`));
+  const pantsPowers = populateMap(useablePants, power, multipliers($slot`Pants`));
+  const shirtPowers = populateMap(useableShirts, power, multipliers($slot`Shirt`));
+
+  const outfits = [...hatPowers].flatMap(([hatPower, hat]) =>
+    [...pantsPowers].flatMap(([pantsPower, pants]) =>
+      [...shirtPowers].flatMap(([shirtPower, shirt]) =>
+        hatPower + pantsPower + shirtPower === power ? { hat, pants, shirt } : []
+      )
+    )
+  );
+  if (!outfits.length) return null;
+  const outfit = maxBy(outfits, outfitPrice, true);
+  logger.debug(`Chose outfit ${outfit.hat} ${outfit.shirt} ${outfit.pants}`);
+  if (outfitPrice(outfit) > myMeat()) return null;
+
+  for (const slot of relevantSlots) {
+    const item = outfit[slot];
+    if(item === Item.none) continue;
+    if (have_(item)) continue;
+    if (!buy(item)) {
+      logger.debug(`Failed to purchase ${item}`);
+      return null;
+    }
+  }
+  return outfit;
 }
