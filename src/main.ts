@@ -1,7 +1,8 @@
 import { Args } from "grimoire-kolmafia";
-import { findTopBusksFast, printBuskResult } from "./utils";
-import { Effect, Modifier, print, toEffect, toModifier } from "kolmafia";
-import { $effects, sinceKolmafiaRevision } from "libram";
+import { Effect, print, toEffect, toModifier } from "kolmafia";
+import { $effects, get, NumericModifier, sinceKolmafiaRevision } from "libram";
+import { findOptimalOutfitPower } from "./utils2";
+import { makeBuskResultFromPowers, printBuskResult } from "./utils";
 
 export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   modifiers: Args.string({
@@ -23,26 +24,35 @@ export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
     help: `Pretend we have effect hammertime to widen the pants scope`,
     default: false,
   }),
+  checkhatrack: Args.boolean({
+    help: `Pretend we have a hatrack to widen the hat scope`,
+    default: false,
+  }),
 });
 
-function parseWeightedModifiers(input: string): [Modifier, number][] {
-  return input
-    .split(",")
-    .map((s) => s.trim())
-    .map((entry) => {
-      const match = entry.match(/^(\d+)\s+(.+)$/);
-      if (match) {
-        const [, weightStr, modStr] = match;
-        const mod = toModifier(modStr.trim());
-        const weight = parseFloat(weightStr);
-        if (mod && !isNaN(weight)) return [mod, weight];
-      } else {
-        const mod = toModifier(entry);
-        if (mod) return [mod, 1]; // default weight = 1
-      }
-      return null;
-    })
-    .filter((m): m is [Modifier, number] => m !== null);
+export let checkhatrack = false;
+
+function parseWeightedModifiers(
+  input: string
+): Partial<Record<NumericModifier, number>> {
+  if (!input.trim()) return {};
+
+  const result: Partial<Record<NumericModifier, number>> = {};
+  const parts = input.split(",").map((s) => s.trim());
+
+  for (const part of parts) {
+    // Try to match weighted, e.g. "5 Meat Drop"
+    const weightedMatch = part.match(/^(\d+)\s+(.+)$/);
+    if (weightedMatch) {
+      const weight = Number(weightedMatch[1]);
+      const modifierName = weightedMatch[2].trim() as NumericModifier;
+      result[modifierName] = weight;
+    } else {
+      // Default weight 1 for singular modifier e.g. "Meat Drop"
+      result[part as NumericModifier] = 1;
+    }
+  }
+  return result;
 }
 
 function parseEffects(input: string): Effect[] {
@@ -61,17 +71,31 @@ export function main(command?: string): void {
     Args.showHelp(args);
     return;
   }
+  if (args.checkhatrack) {
+    checkhatrack = true;
+  }
+
 
   const weightedModifiers = parseWeightedModifiers(args.modifiers);
   const uselesseffects = parseEffects(args.uselesseffects);
 
-  const result = findTopBusksFast(weightedModifiers, uselesseffects, args.busk);
+  const startUses = args.allbusks ? 0 : get("_beretBuskingUses", 0);
+  const buskRange = args.busk !== undefined ? [args.busk - 1] : Array.from({ length: 5 - startUses }, (_, i) => startUses + i);
+
+  const bestPowers = buskRange.map((buskUses) =>
+    findOptimalOutfitPower(weightedModifiers, buskUses, uselesseffects, true)
+  );
+
+  const result = makeBuskResultFromPowers(bestPowers, weightedModifiers, uselesseffects, startUses);
+
 
   print(
-    `DEBUG: Parsed modifiers = ${weightedModifiers.map(([m, w]) => `${w}×${m.name}`).join(", ")}`
+    `DEBUG: Parsed modifiers = ${Object.entries(weightedModifiers)
+      .map(([m, w]) => `${w}×${m}`)
+      .join(", ")}`
   );
   printBuskResult(
     result,
-    weightedModifiers.map(([m]) => m)
+    Object.keys(weightedModifiers).map((mod) => toModifier(mod))
   );
 }
