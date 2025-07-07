@@ -7459,7 +7459,7 @@ var main_args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
     help: "Effects that you want to prioritize, for instance effects=\"Salty Mouth\" will look for busks that grant Salty Mouth",
     default: external_kolmafia_namespaceObject.Effect.none.name
   }),
-  othermodifiers: Args.boolean({
+  othermodifiers: Args.flag({
     help: "Set allbusks to \"true\" to detail bonuses to other modifiers like Item Drop, Meat Drop, etc. even if not weighted",
     default: false
   }),
@@ -7474,11 +7474,11 @@ var main_args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   busk: Args.number({
     help: "Check a specific busk by passing a number to check (1-5)"
   }),
-  checkhammertime: Args.boolean({
+  checkhammertime: Args.flag({
     help: "Pretend we have effect hammertime to widen the pants scope",
     default: false
   }),
-  checkhatrack: Args.boolean({
+  checkhatrack: Args.flag({
     help: "Pretend we have a hatrack to widen the hat scope",
     default: false
   })
