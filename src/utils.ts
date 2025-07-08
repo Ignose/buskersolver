@@ -366,7 +366,7 @@ export function findOptimalOutfitPower(
   if (!powersums.length) return 0;
   return maxBy(powersums, (power) =>
     scoreBusk(
-      Object.entries(beretBuskingEffects(power, buskUses))
+      Object.entries(beretBuskingEffects(power + pathHatPower, buskUses))
         .map(([effect, duration]): [Effect, number] => [toEffect(effect), duration])
         .filter(([e]) => e !== $effect.none),
       valuerFn,
