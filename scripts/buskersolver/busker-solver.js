@@ -7204,7 +7204,7 @@ function findOptimalOutfitPower(effectValuer) {
   var uselessEffectSet = new Set(uselessEffects);
   var powersums = availablePowersums(buyItem);
   if (!powersums.length) return 0;
-  return maxBy(powersums, power => scoreBusk(Object.entries((0,external_kolmafia_namespaceObject.beretBuskingEffects)(power, buskUses)).map(_ref19 => {
+  return maxBy(powersums, power => scoreBusk(Object.entries((0,external_kolmafia_namespaceObject.beretBuskingEffects)(power + pathHatPower, buskUses)).map(_ref19 => {
     var _ref20 = utils_slicedToArray(_ref19, 2),
       effect = _ref20[0],
       duration = _ref20[1];
