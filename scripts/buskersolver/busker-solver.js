@@ -44,7 +44,8 @@ __webpack_require__.d(__webpack_exports__, {
   hammertime: () => (/* binding */ hammertime),
   inHatPath: () => (/* binding */ inHatPath),
   main: () => (/* binding */ main),
-  othermodifiers: () => (/* binding */ othermodifiers)
+  othermodifiers: () => (/* binding */ othermodifiers),
+  test: () => (/* binding */ test)
 });
 
 ;// external "kolmafia"
@@ -6903,7 +6904,7 @@ function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.s
 
 
 var hatTrickHats = inHatPath ? external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["Hat"]))) && (0,external_kolmafia_namespaceObject.haveEquipped)(i)) : [];
-var pathHatPower = hatTrickHats.length > 1 ? hatTrickHats.reduce((total, hat) => total + (0,external_kolmafia_namespaceObject.getPower)(hat), 0) * multipliers($slot(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["hat"])))) : 0;
+var pathHatPower = () => hatTrickHats.length > 1 ? hatTrickHats.reduce((total, hat) => total + (0,external_kolmafia_namespaceObject.getPower)(hat), 0) * multipliers($slot(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["hat"])))) : test ? 4480 : 0;
 
 // eslint-disable-next-line libram/verify-constants
 var beret = template_string_$item(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["prismatic beret"])));
@@ -7119,7 +7120,7 @@ function utils_have() {
 function getUseableClothes() {
   var buyItem = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
   var availableItems = external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.canEquip)(i) && (have(i) || buyItem && (0,external_kolmafia_namespaceObject.npcPrice)(i) > 0));
-  var useableHats = have(template_string_$familiar(utils_templateObject13 || (utils_templateObject13 = utils_taggedTemplateLiteral(["Mad Hatrack"])))) || checkhatrack ? [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject14 || (utils_templateObject14 = utils_taggedTemplateLiteral(["hat"]))) && (inHatPath ? !(0,external_kolmafia_namespaceObject.haveEquipped)(i) : true))), [template_string_$item.none]) : [beret];
+  var useableHats = have(template_string_$familiar(utils_templateObject13 || (utils_templateObject13 = utils_taggedTemplateLiteral(["Mad Hatrack"])))) || checkhatrack ? [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject14 || (utils_templateObject14 = utils_taggedTemplateLiteral(["hat"]))) && !hatTrickHats.includes(i))), [template_string_$item.none]) : [beret];
   var useablePants = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject15 || (utils_templateObject15 = utils_taggedTemplateLiteral(["pants"]))))), [template_string_$item.none]);
   var useableShirts = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject16 || (utils_templateObject16 = utils_taggedTemplateLiteral(["shirt"]))))), [template_string_$item.none]);
   return {
@@ -7136,7 +7137,7 @@ function availablePowersums(buyItem) {
   var hatPowers = utils_toConsumableArray(new Set(useableHats.map(i => multipliers($slot(utils_templateObject17 || (utils_templateObject17 = utils_taggedTemplateLiteral(["Hat"])))) * (0,external_kolmafia_namespaceObject.getPower)(i))));
   var pantPowers = utils_toConsumableArray(new Set(useablePants.map(i => multipliers($slot(utils_templateObject18 || (utils_templateObject18 = utils_taggedTemplateLiteral(["Pants"])))) * (0,external_kolmafia_namespaceObject.getPower)(i))));
   var shirtPowers = utils_toConsumableArray(new Set(useableShirts.map(i => (0,external_kolmafia_namespaceObject.getPower)(i))));
-  return utils_toConsumableArray(new Set(hatPowers.flatMap(hat => pantPowers.flatMap(pant => shirtPowers.flatMap(shirt => hat + pant + shirt)))));
+  return utils_toConsumableArray(new Set(hatPowers.flatMap(hat => pantPowers.flatMap(pant => shirtPowers.flatMap(shirt => hat + pant + shirt + pathHatPower())))));
 }
 function scoreBusk(effects, effectValuer, uselessEffects) {
   var useful = effects.filter(_ref15 => {
@@ -7204,7 +7205,7 @@ function findOptimalOutfitPower(effectValuer) {
   var uselessEffectSet = new Set(uselessEffects);
   var powersums = availablePowersums(buyItem);
   if (!powersums.length) return 0;
-  return maxBy(powersums, power => scoreBusk(Object.entries((0,external_kolmafia_namespaceObject.beretBuskingEffects)(power + pathHatPower, buskUses)).map(_ref19 => {
+  return maxBy(powersums, power => scoreBusk(Object.entries((0,external_kolmafia_namespaceObject.beretBuskingEffects)(power + pathHatPower(), buskUses)).map(_ref19 => {
     var _ref20 = utils_slicedToArray(_ref19, 2),
       effect = _ref20[0],
       duration = _ref20[1];
@@ -7259,7 +7260,7 @@ function findOutfit(power, buyItem) {
         var _ref28 = utils_slicedToArray(_ref27, 2),
           shirtPower = _ref28[0],
           shirt = _ref28[1];
-        return hatPower + pantsPower + shirtPower + pathHatPower === power ? {
+        return hatPower + pantsPower + shirtPower + pathHatPower() === power ? {
           hat: hat,
           pants: pants,
           shirt: shirt
@@ -7345,11 +7346,16 @@ var args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   checkhatrack: Args.flag({
     help: "Pretend we have a hatrack to widen the hat scope",
     default: false
+  }),
+  test: Args.flag({
+    help: "Pretend we're in Hat Path and have 4480 power'",
+    default: false
   })
 });
 var checkhatrack = false;
 var othermodifiers = false;
 var hammertime = false;
+var test = false;
 function parseWeightedModifiers(input) {
   if (!input.trim()) return {};
   var result = {};
@@ -7396,6 +7402,9 @@ function main(command) {
   }
   if (args.othermodifiers) {
     othermodifiers = true;
+  }
+  if (args.test) {
+    test = true;
   }
   var uselesseffects = parseEffects(args.uselesseffects);
   if (args.uniqueeffects) {
