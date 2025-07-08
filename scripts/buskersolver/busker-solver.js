@@ -45,6 +45,7 @@ __webpack_require__.d(__webpack_exports__, {
   inHatPath: () => (/* binding */ inHatPath),
   main: () => (/* binding */ main),
   othermodifiers: () => (/* binding */ othermodifiers),
+  pathpower: () => (/* binding */ pathpower),
   test: () => (/* binding */ test)
 });
 
@@ -6904,7 +6905,7 @@ function utils_taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.s
 
 
 var hatTrickHats = inHatPath ? external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject || (utils_templateObject = utils_taggedTemplateLiteral(["Hat"]))) && (0,external_kolmafia_namespaceObject.haveEquipped)(i)) : [];
-var pathHatPower = () => hatTrickHats.length > 1 ? hatTrickHats.reduce((total, hat) => total + (0,external_kolmafia_namespaceObject.getPower)(hat), 0) * multipliers($slot(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["hat"])))) : test ? 4480 : 0;
+var pathHatPower = () => pathpower > 0 ? pathpower : hatTrickHats.length > 1 ? hatTrickHats.reduce((total, hat) => total + (0,external_kolmafia_namespaceObject.getPower)(hat), 0) * multipliers($slot(utils_templateObject2 || (utils_templateObject2 = utils_taggedTemplateLiteral(["hat"])))) : test ? 4480 : 0;
 
 // eslint-disable-next-line libram/verify-constants
 var beret = template_string_$item(utils_templateObject3 || (utils_templateObject3 = utils_taggedTemplateLiteral(["prismatic beret"])));
@@ -7347,6 +7348,10 @@ var args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
     help: "Pretend we have a hatrack to widen the hat scope",
     default: false
   }),
+  pathhatpower: Args.number({
+    help: "So you're in hat path! How nice. Unfortunately, the Mafia support for Hat Path isn't great. Pass a number with this arg to tell the script what to value your current hat stack power at.",
+    default: 0
+  }),
   test: Args.flag({
     help: "Pretend we're in Hat Path and have 4480 power'",
     default: false
@@ -7356,6 +7361,7 @@ var checkhatrack = false;
 var othermodifiers = false;
 var hammertime = false;
 var test = false;
+var pathpower = 0;
 function parseWeightedModifiers(input) {
   if (!input.trim()) return {};
   var result = {};
@@ -7400,6 +7406,7 @@ function main(command) {
   if (args.checkhammertime) {
     hammertime = true;
   }
+  pathpower = args.pathhatpower;
   if (args.othermodifiers) {
     othermodifiers = true;
   }
