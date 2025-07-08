@@ -47,6 +47,10 @@ export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
     help: `Pretend we have a hatrack to widen the hat scope`,
     default: false,
   }),
+  pathhatpower: Args.number({
+    help: `So you're in hat path! How nice. Unfortunately, the Mafia support for Hat Path isn't great. Pass a number with this arg to tell the script what to value your current hat stack power at.`,
+    default: 0,
+  }),
   test: Args.flag({
     help: `Pretend we're in Hat Path and have 4480 power'`,
     default: false,
@@ -57,6 +61,7 @@ export let checkhatrack = false;
 export let othermodifiers = false;
 export let hammertime = false;
 export let test = false;
+export let pathpower = 0;
 
 function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, number>> {
   if (!input.trim()) return {};
@@ -102,6 +107,7 @@ export function main(command?: string): void {
   if (args.checkhammertime) {
     hammertime = true;
   }
+  pathpower = args.pathhatpower;
 
   if (args.othermodifiers) {
     othermodifiers = true;

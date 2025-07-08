@@ -29,7 +29,7 @@ import {
   NumericModifier,
   sum,
 } from "libram";
-import { checkhatrack, hammertime, inHatPath, othermodifiers, test } from "./main";
+import { checkhatrack, hammertime, inHatPath, othermodifiers, pathpower, test } from "./main";
 
 export interface Busk {
   effects: Effect[];
@@ -47,7 +47,9 @@ const hatTrickHats = inHatPath
   ? Item.all().filter((i) => toSlot(i) === $slot`Hat` && haveEquipped(i))
   : [];
 const pathHatPower = () =>
-  hatTrickHats.length > 1
+  pathpower > 0
+    ? pathpower
+    : hatTrickHats.length > 1
     ? hatTrickHats.reduce((total, hat) => total + getPower(hat), 0) * multipliers($slot`hat`)
     : test
     ? 4480
