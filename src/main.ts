@@ -47,11 +47,16 @@ export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
     help: `Pretend we have a hatrack to widen the hat scope`,
     default: false,
   }),
+  test: Args.flag({
+    help: `Pretend we're in Hat Path and have 4480 power'`,
+    default: false,
+  }),
 });
 
 export let checkhatrack = false;
 export let othermodifiers = false;
 export let hammertime = false;
+export let test = false;
 
 function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, number>> {
   if (!input.trim()) return {};
@@ -100,6 +105,10 @@ export function main(command?: string): void {
 
   if (args.othermodifiers) {
     othermodifiers = true;
+  }
+
+  if (args.test) {
+    test = true;
   }
 
   const uselesseffects = parseEffects(args.uselesseffects);

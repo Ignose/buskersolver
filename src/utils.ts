@@ -29,7 +29,7 @@ import {
   NumericModifier,
   sum,
 } from "libram";
-import { checkhatrack, hammertime, inHatPath, othermodifiers } from "./main";
+import { checkhatrack, hammertime, inHatPath, othermodifiers, test } from "./main";
 
 export interface Busk {
   effects: Effect[];
@@ -46,9 +46,11 @@ export interface BuskResult {
 const hatTrickHats = inHatPath
   ? Item.all().filter((i) => toSlot(i) === $slot`Hat` && haveEquipped(i))
   : [];
-const pathHatPower =
+const pathHatPower = () =>
   hatTrickHats.length > 1
     ? hatTrickHats.reduce((total, hat) => total + getPower(hat), 0) * multipliers($slot`hat`)
+    : test
+    ? 4480
     : 0;
 
 // eslint-disable-next-line libram/verify-constants
@@ -254,9 +256,7 @@ function getUseableClothes(buyItem = true): {
   const useableHats =
     have_($familiar`Mad Hatrack`) || checkhatrack
       ? [
-          ...availableItems.filter(
-            (i) => toSlot(i) === $slot`hat` && (inHatPath ? !haveEquipped(i) : true)
-          ),
+          ...availableItems.filter((i) => toSlot(i) === $slot`hat` && !hatTrickHats.includes(i)),
           $item.none,
         ]
       : [beret];
@@ -275,7 +275,9 @@ function availablePowersums(buyItem: boolean): number[] {
   return [
     ...new Set(
       hatPowers.flatMap((hat) =>
-        pantPowers.flatMap((pant) => shirtPowers.flatMap((shirt) => hat + pant + shirt))
+        pantPowers.flatMap((pant) =>
+          shirtPowers.flatMap((shirt) => hat + pant + shirt + pathHatPower())
+        )
       )
     ),
   ];
@@ -366,7 +368,7 @@ export function findOptimalOutfitPower(
   if (!powersums.length) return 0;
   return maxBy(powersums, (power) =>
     scoreBusk(
-      Object.entries(beretBuskingEffects(power + pathHatPower, buskUses))
+      Object.entries(beretBuskingEffects(power + pathHatPower(), buskUses))
         .map(([effect, duration]): [Effect, number] => [toEffect(effect), duration])
         .filter(([e]) => e !== $effect.none),
       valuerFn,
@@ -402,7 +404,7 @@ export function findOutfit(power: number, buyItem: boolean) {
   const outfits = [...hatPowers].flatMap(([hatPower, hat]) =>
     [...pantsPowers].flatMap(([pantsPower, pants]) =>
       [...shirtPowers].flatMap(([shirtPower, shirt]) =>
-        hatPower + pantsPower + shirtPower + pathHatPower === power ? { hat, pants, shirt } : []
+        hatPower + pantsPower + shirtPower + pathHatPower() === power ? { hat, pants, shirt } : []
       )
     )
   );
