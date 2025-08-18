@@ -71,14 +71,12 @@ function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, 
 
   for (const part of parts) {
     // Try to match weighted, e.g. "5 Meat Drop"
-    const weightedMatch = part.match(/^(\d+)\s+(.+)$/);
+    const weightedMatch = part.match(/^(-)?(\d+)?\s*(.+)$/);
     if (weightedMatch) {
-      const weight = Number(weightedMatch[1]);
-      const modifierName = weightedMatch[2].trim() as NumericModifier;
-      result[modifierName] = weight;
-    } else {
-      // Default weight 1 for singular modifier e.g. "Meat Drop"
-      result[part as NumericModifier] = 1;
+      const sign = weightedMatch[1] === "-" ? -1 : 1;
+      const weight = weightedMatch[2] === undefined ? 1 : Number(weightedMatch[2]);
+      const modifierName = weightedMatch[3].trim() as NumericModifier;
+      result[modifierName] = sign * weight;
     }
   }
   return result;
