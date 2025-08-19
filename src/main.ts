@@ -1,6 +1,6 @@
 import { Args } from "grimoire-kolmafia";
 import { Effect, Modifier, myPath, print, toEffect, toModifier } from "kolmafia";
-import { $effects, $path, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
+import { $effects, $path, get, have, sinceKolmafiaRevision } from "libram";
 import {
   findOptimalOutfitPower,
   hybridEffectValuer,
@@ -63,22 +63,24 @@ export let hammertime = false;
 export let test = false;
 export let pathpower = 0;
 
-function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, number>> {
-  if (!input.trim()) return {};
+function parseWeightedModifiers(input: string): Map<Modifier, number> {
+  if (!input.trim()) return new Map<Modifier, number>();
 
-  const result: Partial<Record<NumericModifier, number>> = {};
+  const result = new Map<Modifier, number>();
   const parts = input.split(",").map((s) => s.trim());
 
   for (const part of parts) {
     // Try to match weighted, e.g. "5 Meat Drop"
-    const weightedMatch = part.match(/^(\d+)\s+(.+)$/);
+    const weightedMatch = part.match(/^(-)?(\d+)?\s*(.+)$/);
     if (weightedMatch) {
-      const weight = Number(weightedMatch[1]);
-      const modifierName = weightedMatch[2].trim() as NumericModifier;
-      result[modifierName] = weight;
-    } else {
-      // Default weight 1 for singular modifier e.g. "Meat Drop"
-      result[part as NumericModifier] = 1;
+      const sign = weightedMatch[1] === "-" ? -1 : 1;
+      const weight = weightedMatch[2] === undefined ? 1 : Number(weightedMatch[2]);
+      const modifier = toModifier(weightedMatch[3].trim());
+      if (modifier.type === "numeric" || modifier.type === "boolean") {
+        result.set(modifier, sign * weight);
+      } else {
+        print(`Error: modifier '${weightedMatch[3]}' not numeric or boolean`);
+      }
     }
   }
   return result;
@@ -131,7 +133,9 @@ export function main(command?: string): void {
   if (args.effects !== Effect.none.name || args.modifiers !== Modifier.none.name) {
     const desiredEffects = args.effects !== Effect.none.name ? parseEffects(args.effects) : [];
     const weightedModifiers =
-      args.modifiers !== Modifier.none.name ? parseWeightedModifiers(args.modifiers) : {};
+      args.modifiers !== Modifier.none.name
+        ? parseWeightedModifiers(args.modifiers)
+        : new Map<Modifier, number>();
 
     const valuerFn = normalizeEffectValuer(hybridEffectValuer(desiredEffects, weightedModifiers));
 
@@ -149,15 +153,11 @@ export function main(command?: string): void {
     print(
       `Hybrid strategy: prioritizing effects [${desiredEffects
         .map((e) => e.name)
-        .join(", ")}], fallback modifiers [${Object.entries(weightedModifiers)
+        .join(", ")}], fallback modifiers [${[...weightedModifiers.entries()]
         .map(([m, w]) => `${w}×${m}`)
         .join(", ")}]`
     );
 
-    printBuskResult(
-      result,
-      Object.keys(weightedModifiers).map((mod) => toModifier(mod)),
-      desiredEffects
-    );
+    printBuskResult(result, weightedModifiers, desiredEffects);
   }
 }
