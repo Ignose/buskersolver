@@ -63,10 +63,10 @@ export let hammertime = false;
 export let test = false;
 export let pathpower = 0;
 
-function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, number>> {
-  if (!input.trim()) return {};
+function parseWeightedModifiers(input: string): Map<NumericModifier, number> {
+  if (!input.trim()) return new Map<NumericModifier, number>();
 
-  const result: Partial<Record<NumericModifier, number>> = {};
+  const result = new Map<NumericModifier, number>();
   const parts = input.split(",").map((s) => s.trim());
 
   for (const part of parts) {
@@ -76,7 +76,7 @@ function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, 
       const sign = weightedMatch[1] === "-" ? -1 : 1;
       const weight = weightedMatch[2] === undefined ? 1 : Number(weightedMatch[2]);
       const modifierName = weightedMatch[3].trim() as NumericModifier;
-      result[modifierName] = sign * weight;
+      result.set(modifierName, sign * weight);
     }
   }
   return result;
@@ -129,7 +129,9 @@ export function main(command?: string): void {
   if (args.effects !== Effect.none.name || args.modifiers !== Modifier.none.name) {
     const desiredEffects = args.effects !== Effect.none.name ? parseEffects(args.effects) : [];
     const weightedModifiers =
-      args.modifiers !== Modifier.none.name ? parseWeightedModifiers(args.modifiers) : {};
+      args.modifiers !== Modifier.none.name
+        ? parseWeightedModifiers(args.modifiers)
+        : new Map<NumericModifier, number>();
 
     const valuerFn = normalizeEffectValuer(hybridEffectValuer(desiredEffects, weightedModifiers));
 
@@ -147,7 +149,7 @@ export function main(command?: string): void {
     print(
       `Hybrid strategy: prioritizing effects [${desiredEffects
         .map((e) => e.name)
-        .join(", ")}], fallback modifiers [${Object.entries(weightedModifiers)
+        .join(", ")}], fallback modifiers [${[...weightedModifiers.entries()]
         .map(([m, w]) => `${w}×${m}`)
         .join(", ")}]`
     );

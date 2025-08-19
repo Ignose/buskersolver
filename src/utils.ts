@@ -74,7 +74,7 @@ function multipliers(slot: Slot): number {
 
 export function printBuskResult(
   result: BuskResult | null,
-  modifiers: Partial<Record<NumericModifier, number>>,
+  modifiers: Map<NumericModifier, number>,
   desiredEffects: Effect[] = []
 ): void {
   if (!result) {
@@ -95,7 +95,7 @@ export function printBuskResult(
     $modifier`Familiar Experience`,
   ];
 
-  const modKeys = Object.keys(modifiers).map((mod) => toModifier(mod));
+  const modKeys = [...modifiers.keys()].map((mod) => toModifier(mod));
 
   for (const { effects, daRaw, buskIndex } of bestBusks) {
     const desiredMatches = effects.filter((e) => desiredEffects.includes(e));
@@ -125,7 +125,7 @@ export function printBuskResult(
     // For each weighted modifier, print contributing effects
     for (const mod of modKeys) {
       const contributingEffects = effects.filter(
-        (e) => numericModifier(e, mod) * modifiers[mod.name as NumericModifier]! > 0
+        (e) => numericModifier(e, mod) * modifiers.get(mod.name as NumericModifier)! > 0
       );
       if (contributingEffects.length === 0) continue;
 
@@ -147,7 +147,9 @@ export function printBuskResult(
       }
     }
     const usefulEffects = effects.filter((e) =>
-      modKeys.some((mod) => numericModifier(e, mod) * modifiers[mod.name as NumericModifier]! > 0)
+      modKeys.some(
+        (mod) => numericModifier(e, mod) * modifiers.get(mod.name as NumericModifier)! > 0
+      )
     );
     const otherEffects = effects.filter(
       (e) => !desiredEffects.includes(e) && !usefulEffects.includes(e)
@@ -173,13 +175,13 @@ export function printBuskResult(
 
 export function makeBuskResultFromPowers(
   powers: number[],
-  weightedModifiers: Partial<Record<NumericModifier, number>>,
+  weightedModifiers: Map<NumericModifier, number>,
   uselessEffects: Effect[],
   buskStartIndex = get("_beretBuskingUses", 0)
 ): BuskResult {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const effectValuer = (effect: Effect, _duration: number) =>
-    Object.entries(weightedModifiers)
+    [...weightedModifiers.entries()]
       .map(([mod, weight]) => (weight ?? 0) * numericModifier(effect, mod))
       .reduce((a, b) => a + b, 0);
 
@@ -205,7 +207,7 @@ export function makeBuskResultFromPowers(
 
 export function hybridEffectValuer(
   desiredEffects: Effect[],
-  weightedModifiers: Partial<Record<NumericModifier, number>>
+  weightedModifiers: Map<NumericModifier, number>
 ): (effect: Effect, duration: number, all?: [Effect, number][]) => number {
   const wantedSet = new Set(desiredEffects);
   return (effect, duration) => {
@@ -214,7 +216,7 @@ export function hybridEffectValuer(
       return 1e6 + duration; // Big constant ensures it's preferred
     }
     return sum(
-      Object.entries(weightedModifiers),
+      [...weightedModifiers.entries()],
       ([mod, weight]) => weight * numericModifier(effect, mod)
     );
   };
@@ -230,18 +232,18 @@ export function normalizeEffectValuer(
     const set = new Set(valuer);
     return (effect, duration) => (set.has(effect) ? duration : 0);
   } else {
-    // valuer is a weighted modifier object
+    // valuer is a map
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return (effect, _duration) =>
       sum(
-        Object.entries(valuer),
+        [...valuer.entries()],
         ([modifier, weight]) => weight * numericModifier(effect, modifier)
       );
   }
 }
 
 export type EffectValuer =
-  | Partial<Record<NumericModifier, number>>
+  | Map<NumericModifier, number>
   | ((effect: Effect, duration: number) => number)
   | Effect[];
 
@@ -322,7 +324,7 @@ export function findOptimalOutfitPower(
  * @returns The power-sum at which you'll find the optimal busk for this situation.
  */
 export function findOptimalOutfitPower(
-  weightedModifiers: Partial<Record<NumericModifier, number>>,
+  weightedModifiers: Map<NumericModifier, number>,
   buskUses?: number,
   uselessEffects?: Effect[],
   buyItem?: boolean
