@@ -26,7 +26,6 @@ import {
   have as have_,
   logger,
   maxBy,
-  NumericModifier,
   sum,
 } from "libram";
 import {
@@ -81,7 +80,7 @@ function multipliers(slot: Slot): number {
 
 export function printBuskResult(
   result: BuskResult | null,
-  modifiers: Map<NumericModifier, number>,
+  modifiers: Map<Modifier, number>,
   desiredEffects: Effect[] = []
 ): void {
   if (!result) {
@@ -102,7 +101,7 @@ export function printBuskResult(
     $modifier`Familiar Experience`,
   ];
 
-  const modKeys = [...modifiers.keys()].map((mod) => toModifier(mod));
+  const modKeys = [...modifiers.keys()];
 
   for (const { effects, daRaw, buskIndex } of bestBusks) {
     const desiredMatches = effects.filter((e) => desiredEffects.includes(e));
@@ -132,7 +131,7 @@ export function printBuskResult(
     // For each weighted modifier, print contributing effects
     for (const mod of modKeys) {
       const contributingEffects = effects.filter(
-        (e) => numericModifier(e, mod) * modifiers.get(mod.name as NumericModifier)! > 0
+        (e) => numericModifier(e, mod) * modifiers.get(mod)! > 0
       );
       if (contributingEffects.length === 0) continue;
 
@@ -154,9 +153,7 @@ export function printBuskResult(
       }
     }
     const usefulEffects = effects.filter((e) =>
-      modKeys.some(
-        (mod) => numericModifier(e, mod) * modifiers.get(mod.name as NumericModifier)! > 0
-      )
+      modKeys.some((mod) => numericModifier(e, mod) * modifiers.get(mod)! > 0)
     );
     const otherEffects = effects.filter(
       (e) => !desiredEffects.includes(e) && !usefulEffects.includes(e)
@@ -182,7 +179,7 @@ export function printBuskResult(
 
 export function makeBuskResultFromPowers(
   powers: number[],
-  weightedModifiers: Map<NumericModifier, number>,
+  weightedModifiers: Map<Modifier, number>,
   uselessEffects: Effect[],
   buskStartIndex = get("_beretBuskingUses", 0)
 ): BuskResult {
@@ -214,7 +211,7 @@ export function makeBuskResultFromPowers(
 
 export function hybridEffectValuer(
   desiredEffects: Effect[],
-  weightedModifiers: Map<NumericModifier, number>
+  weightedModifiers: Map<Modifier, number>
 ): (effect: Effect, duration: number, all?: [Effect, number][]) => number {
   const wantedSet = new Set(desiredEffects);
   return (effect, duration) => {
@@ -250,7 +247,7 @@ export function normalizeEffectValuer(
 }
 
 export type EffectValuer =
-  | Map<NumericModifier, number>
+  | Map<Modifier, number>
   | ((effect: Effect, duration: number) => number)
   | Effect[];
 
@@ -331,7 +328,7 @@ export function findOptimalOutfitPower(
  * @returns The power-sum at which you'll find the optimal busk for this situation.
  */
 export function findOptimalOutfitPower(
-  weightedModifiers: Map<NumericModifier, number>,
+  weightedModifiers: Map<Modifier, number>,
   buskUses?: number,
   uselessEffects?: Effect[],
   buyItem?: boolean

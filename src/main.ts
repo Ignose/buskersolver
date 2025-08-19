@@ -1,5 +1,5 @@
 import { Args } from "grimoire-kolmafia";
-import { Effect, Modifier, myPath, print, toEffect } from "kolmafia";
+import { Effect, Modifier, myPath, print, toEffect, toModifier } from "kolmafia";
 import { $effects, $path, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
 import {
   findOptimalOutfitPower,
@@ -68,10 +68,10 @@ export let test = false;
 export let pathpower = 0;
 export let owned = false;
 
-function parseWeightedModifiers(input: string): Map<NumericModifier, number> {
-  if (!input.trim()) return new Map<NumericModifier, number>();
+function parseWeightedModifiers(input: string): Map<Modifier, number> {
+  if (!input.trim()) return new Map<Modifier, number>();
 
-  const result = new Map<NumericModifier, number>();
+  const result = new Map<Modifier, number>();
   const parts = input.split(",").map((s) => s.trim());
 
   for (const part of parts) {
@@ -80,8 +80,8 @@ function parseWeightedModifiers(input: string): Map<NumericModifier, number> {
     if (weightedMatch) {
       const sign = weightedMatch[1] === "-" ? -1 : 1;
       const weight = weightedMatch[2] === undefined ? 1 : Number(weightedMatch[2]);
-      const modifierName = weightedMatch[3].trim() as NumericModifier;
-      result.set(modifierName, sign * weight);
+      const modifier = toModifier(weightedMatch[3].trim());
+      result.set(modifier, sign * weight);
     }
   }
   return result;
@@ -140,7 +140,7 @@ export function main(command?: string): void {
     const weightedModifiers =
       args.modifiers !== Modifier.none.name
         ? parseWeightedModifiers(args.modifiers)
-        : new Map<NumericModifier, number>();
+        : new Map<Modifier, number>();
 
     const valuerFn = normalizeEffectValuer(hybridEffectValuer(desiredEffects, weightedModifiers));
 
