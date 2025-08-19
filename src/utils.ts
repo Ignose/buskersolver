@@ -1,5 +1,6 @@
 import {
   beretBuskingEffects,
+  booleanModifier,
   buy,
   canEquip,
   Effect,
@@ -13,7 +14,6 @@ import {
   print,
   Slot,
   toEffect,
-  toModifier,
   toSlot,
 } from "kolmafia";
 import {
@@ -103,7 +103,7 @@ export function printBuskResult(
     // Calculate total buff per weighted modifier
     const weightedTotals = new Map<Modifier, number>();
     for (const mod of modKeys) {
-      const total = sum(effects, (ef) => numericModifier(ef, mod));
+      const total = sum(effects, (ef) => modifier(ef, mod));
       weightedTotals.set(mod, total);
     }
 
@@ -123,9 +123,7 @@ export function printBuskResult(
 
     // For each weighted modifier, print contributing effects
     for (const mod of modKeys) {
-      const contributingEffects = effects.filter(
-        (e) => numericModifier(e, mod) * modifiers.get(mod)! > 0
-      );
+      const contributingEffects = effects.filter((e) => modifier(e, mod) * modifiers.get(mod)! > 0);
       if (contributingEffects.length === 0) continue;
 
       print(`${mod.name}:`);
@@ -138,7 +136,7 @@ export function printBuskResult(
       if (otherMods.length > 0) {
         print(`Other Useful Modifiers:`);
         for (const mod of otherMods) {
-          const total = sum(effects, (ef) => numericModifier(ef, mod));
+          const total = sum(effects, (ef) => modifier(ef, mod));
           if (total > 0) {
             print(`  ${mod.name}: ${total}`);
           }
@@ -146,7 +144,7 @@ export function printBuskResult(
       }
     }
     const usefulEffects = effects.filter((e) =>
-      modKeys.some((mod) => numericModifier(e, mod) * modifiers.get(mod)! > 0)
+      modKeys.some((mod) => modifier(e, mod) * modifiers.get(mod)! > 0)
     );
     const otherEffects = effects.filter(
       (e) => !desiredEffects.includes(e) && !usefulEffects.includes(e)
@@ -179,7 +177,7 @@ export function makeBuskResultFromPowers(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const effectValuer = (effect: Effect, _duration: number) =>
     [...weightedModifiers.entries()]
-      .map(([mod, weight]) => (weight ?? 0) * numericModifier(effect, mod))
+      .map(([mod, weight]) => (weight ?? 0) * modifier(effect, mod))
       .reduce((a, b) => a + b, 0);
 
   const busks: Busk[] = powers.map((power, index) => {
@@ -212,10 +210,7 @@ export function hybridEffectValuer(
       // Strongly prioritize desired effects
       return 1e6 + duration; // Big constant ensures it's preferred
     }
-    return sum(
-      [...weightedModifiers.entries()],
-      ([mod, weight]) => weight * numericModifier(effect, mod)
-    );
+    return sum([...weightedModifiers.entries()], ([mod, weight]) => weight * modifier(effect, mod));
   };
 }
 
@@ -232,10 +227,7 @@ export function normalizeEffectValuer(
     // valuer is a map
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return (effect, _duration) =>
-      sum(
-        [...valuer.entries()],
-        ([modifier, weight]) => weight * numericModifier(effect, modifier)
-      );
+      sum([...valuer.entries()], ([mod, weight]) => weight * modifier(effect, mod));
   }
 }
 
@@ -429,4 +421,14 @@ export function findOutfit(power: number, buyItem: boolean) {
     }
   }
   return outfit;
+}
+
+function modifier(effect: Effect, mod: Modifier): number {
+  if (mod.type === "numeric") {
+    return numericModifier(effect, mod);
+  } else if (mod.type === "boolean") {
+    return booleanModifier(effect, mod) ? 1 : 0;
+  }
+  // we limit to numeric or boolean modifiers when parsing
+  return 0;
 }

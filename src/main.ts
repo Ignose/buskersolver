@@ -1,6 +1,6 @@
 import { Args } from "grimoire-kolmafia";
 import { Effect, Modifier, myPath, print, toEffect, toModifier } from "kolmafia";
-import { $effects, $path, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
+import { $effects, $path, get, have, sinceKolmafiaRevision } from "libram";
 import {
   findOptimalOutfitPower,
   hybridEffectValuer,
@@ -76,7 +76,11 @@ function parseWeightedModifiers(input: string): Map<Modifier, number> {
       const sign = weightedMatch[1] === "-" ? -1 : 1;
       const weight = weightedMatch[2] === undefined ? 1 : Number(weightedMatch[2]);
       const modifier = toModifier(weightedMatch[3].trim());
-      result.set(modifier, sign * weight);
+      if (modifier.type === "numeric" || modifier.type === "boolean") {
+        result.set(modifier, sign * weight);
+      } else {
+        print(`Error: modifier '${weightedMatch[3]}' not numeric or boolean`);
+      }
     }
   }
   return result;
