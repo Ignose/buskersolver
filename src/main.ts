@@ -152,10 +152,6 @@ export function main(command?: string): void {
         .join(", ")}]`
     );
 
-    printBuskResult(
-      result,
-      weightedModifiers,
-      desiredEffects
-    );
+    printBuskResult(result, weightedModifiers, desiredEffects);
   }
 }

@@ -124,7 +124,9 @@ export function printBuskResult(
 
     // For each weighted modifier, print contributing effects
     for (const mod of modKeys) {
-      const contributingEffects = effects.filter((e) => numericModifier(e, mod) * modifiers[mod.name as NumericModifier]! > 0);
+      const contributingEffects = effects.filter(
+        (e) => numericModifier(e, mod) * modifiers[mod.name as NumericModifier]! > 0
+      );
       if (contributingEffects.length === 0) continue;
 
       print(`${mod.name}:`);
