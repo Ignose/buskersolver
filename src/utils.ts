@@ -13,6 +13,7 @@ import {
   print,
   Slot,
   toEffect,
+  toModifier,
   toSlot,
 } from "kolmafia";
 import {
@@ -73,7 +74,7 @@ function multipliers(slot: Slot): number {
 
 export function printBuskResult(
   result: BuskResult | null,
-  modifiers: Modifier[],
+  modifiers: Partial<Record<NumericModifier, number>>,
   desiredEffects: Effect[] = []
 ): void {
   if (!result) {
@@ -94,13 +95,15 @@ export function printBuskResult(
     $modifier`Familiar Experience`,
   ];
 
+  const modKeys = Object.keys(modifiers).map((mod) => toModifier(mod));
+
   for (const { effects, daRaw, buskIndex } of bestBusks) {
     const desiredMatches = effects.filter((e) => desiredEffects.includes(e));
     print(`Power ${daRaw} Busk ${buskIndex + 1}`);
 
     // Calculate total buff per weighted modifier
     const weightedTotals = new Map<Modifier, number>();
-    for (const mod of modifiers) {
+    for (const mod of modKeys) {
       const total = sum(effects, (ef) => numericModifier(ef, mod));
       weightedTotals.set(mod, total);
     }
@@ -120,8 +123,8 @@ export function printBuskResult(
     print(`Total buffs: ${totalBuffsStr}`);
 
     // For each weighted modifier, print contributing effects
-    for (const mod of modifiers) {
-      const contributingEffects = effects.filter((e) => numericModifier(e, mod) > 0);
+    for (const mod of modKeys) {
+      const contributingEffects = effects.filter((e) => numericModifier(e, mod) * modifiers[mod.name as NumericModifier]! > 0);
       if (contributingEffects.length === 0) continue;
 
       print(`${mod.name}:`);
@@ -130,7 +133,7 @@ export function printBuskResult(
 
     // Optionally print other useful modifiers if args.othermodifiers is true
     if (othermodifiers) {
-      const otherMods = otherModifiersList.filter((mod) => !modifiers.includes(mod));
+      const otherMods = otherModifiersList.filter((mod) => !modKeys.includes(mod));
       if (otherMods.length > 0) {
         print(`Other Useful Modifiers:`);
         for (const mod of otherMods) {
@@ -142,7 +145,7 @@ export function printBuskResult(
       }
     }
     const usefulEffects = effects.filter((e) =>
-      modifiers.some((mod) => numericModifier(e, mod) > 0)
+      modKeys.some((mod) => numericModifier(e, mod) * modifiers[mod.name as NumericModifier]! > 0)
     );
     const otherEffects = effects.filter(
       (e) => !desiredEffects.includes(e) && !usefulEffects.includes(e)
