@@ -1,5 +1,5 @@
 import { Args } from "grimoire-kolmafia";
-import { Effect, Modifier, myPath, print, toEffect, toModifier } from "kolmafia";
+import { Effect, Modifier, myPath, print, toEffect } from "kolmafia";
 import { $effects, $path, get, have, NumericModifier, sinceKolmafiaRevision } from "libram";
 import {
   findOptimalOutfitPower,
@@ -163,7 +163,7 @@ export function main(command?: string): void {
 
     printBuskResult(
       result,
-      Object.keys(weightedModifiers).map((mod) => toModifier(mod)),
+      weightedModifiers,
       desiredEffects
     );
   }
