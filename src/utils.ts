@@ -1,6 +1,5 @@
 import {
   beretBuskingEffects,
-  buy,
   canEquip,
   Effect,
   getPower,
@@ -419,10 +418,6 @@ export function findOutfit(power: number, buyItem: boolean) {
     const item = outfit[slot];
     if (item === Item.none) continue;
     if (have_(item)) continue;
-    if (!buy(item)) {
-      logger.debug(`Failed to purchase ${item}`);
-      return null;
-    }
   }
   return outfit;
 }
