@@ -7281,10 +7281,6 @@ function findOutfit(power, buyItem) {
       var item = outfit[slot];
       if (item === external_kolmafia_namespaceObject.Item.none) continue;
       if (have(item)) continue;
-      if (!(0,external_kolmafia_namespaceObject.buy)(item)) {
-        dist_logger.debug("Failed to purchase ".concat(item));
-        return null;
-      }
     }
   } catch (err) {
     _iterator6.e(err);
