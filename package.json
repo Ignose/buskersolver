@@ -1,8 +1,8 @@
 {
-  "name": "isGarboForMe",
+  "name": "buskersolver",
   "version": "1.0.0",
-  "description": "Simple script to determine if you should Garbo or Volcano for your farming!",
-  "main": "KoLmafia/scripts/isGarboForMe/isGarboForMe.js",
+  "description": "Add modifiers, get busker solutions!",
+  "main": "KoLmafia/scripts/busker-solver/BuskerSolver.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "yarn run build:types && yarn run build:js",
@@ -41,7 +41,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ignose/isGarboForMe.git"
+    "url": "git+https://github.com/Ignose/BuskerSolver.git"
   },
   "keywords": [
     "KoLMafia",
@@ -49,8 +49,8 @@
     "TS"
   ],
   "bugs": {
-    "url": "https://github.com/Ignose/isGarboForMe/issues"
+    "url": "https://github.com/Ignose/BuskerSolver/issues"
   },
-  "homepage": "https://github.com/Ignose/isGarboForMe#readme",
+  "homepage": "https://github.com/Ignose/BuskerSolver#readme",
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
