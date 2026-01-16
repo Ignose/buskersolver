@@ -45,6 +45,7 @@ __webpack_require__.d(__webpack_exports__, {
   inHatPath: () => (/* binding */ inHatPath),
   main: () => (/* binding */ main),
   othermodifiers: () => (/* binding */ othermodifiers),
+  owned: () => (/* binding */ owned),
   pathpower: () => (/* binding */ pathpower),
   test: () => (/* binding */ test)
 });
@@ -7120,7 +7121,7 @@ function utils_have() {
 }
 function getUseableClothes() {
   var buyItem = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
-  var availableItems = external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.canEquip)(i) && (have(i) || buyItem && (0,external_kolmafia_namespaceObject.npcPrice)(i) > 0));
+  var availableItems = external_kolmafia_namespaceObject.Item.all().filter(i => (0,external_kolmafia_namespaceObject.canEquip)(i) && (have(i) || !owned && buyItem && (0,external_kolmafia_namespaceObject.npcPrice)(i) > 0));
   var useableHats = have(template_string_$familiar(utils_templateObject13 || (utils_templateObject13 = utils_taggedTemplateLiteral(["Mad Hatrack"])))) || checkhatrack ? [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject14 || (utils_templateObject14 = utils_taggedTemplateLiteral(["hat"]))) && !hatTrickHats.includes(i))), [template_string_$item.none]) : [beret];
   var useablePants = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject15 || (utils_templateObject15 = utils_taggedTemplateLiteral(["pants"]))))), [template_string_$item.none]);
   var useableShirts = [].concat(utils_toConsumableArray(availableItems.filter(i => (0,external_kolmafia_namespaceObject.toSlot)(i) === $slot(utils_templateObject16 || (utils_templateObject16 = utils_taggedTemplateLiteral(["shirt"]))))), [template_string_$item.none]);
@@ -7351,6 +7352,10 @@ var args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
   test: Args.flag({
     help: "Pretend we're in Hat Path and have 4480 power'",
     default: false
+  }),
+  owned: Args.flag({
+    help: "Check only the equipment we own.",
+    default: false
   })
 });
 var checkhatrack = false;
@@ -7358,6 +7363,7 @@ var othermodifiers = false;
 var hammertime = false;
 var test = false;
 var pathpower = 0;
+var owned = false;
 function parseWeightedModifiers(input) {
   if (!input.trim()) return {};
   var result = {};
@@ -7405,6 +7411,9 @@ function main(command) {
   pathpower = args.pathhatpower;
   if (args.othermodifiers) {
     othermodifiers = true;
+  }
+  if (args.owned) {
+    owned = true;
   }
   if (args.test) {
     test = true;
