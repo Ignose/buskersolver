@@ -118,7 +118,7 @@ export function main(command?: string): void {
     othermodifiers = true;
   }
 
-  if (args.owned ) {
+  if (args.owned) {
     owned = true;
   }
 
