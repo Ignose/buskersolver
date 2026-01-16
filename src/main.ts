@@ -55,6 +55,10 @@ export const args = Args.create("Beret_Busk_Tester", "Be good, be kind", {
     help: `Pretend we're in Hat Path and have 4480 power'`,
     default: false,
   }),
+  owned: Args.flag({
+    help: `Check only the equipment we own.`,
+    default: false,
+  }),
 });
 
 export let checkhatrack = false;
@@ -62,6 +66,7 @@ export let othermodifiers = false;
 export let hammertime = false;
 export let test = false;
 export let pathpower = 0;
+export let owned = false;
 
 function parseWeightedModifiers(input: string): Partial<Record<NumericModifier, number>> {
   if (!input.trim()) return {};
@@ -111,6 +116,10 @@ export function main(command?: string): void {
 
   if (args.othermodifiers) {
     othermodifiers = true;
+  }
+
+  if (args.owned ) {
+    owned = true;
   }
 
   if (args.test) {

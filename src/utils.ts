@@ -28,7 +28,7 @@ import {
   NumericModifier,
   sum,
 } from "libram";
-import { checkhatrack, hammertime, inHatPath, othermodifiers, pathpower, test } from "./main";
+import { checkhatrack, hammertime, inHatPath, othermodifiers, owned, pathpower, test } from "./main";
 
 export interface Busk {
   effects: Effect[];
@@ -252,7 +252,7 @@ function getUseableClothes(buyItem = true): {
   useableShirts: Item[];
 } {
   const availableItems = Item.all().filter(
-    (i) => canEquip(i) && (have_(i) || (buyItem && npcPrice(i) > 0))
+    (i) => canEquip(i) && (have_(i) || (!owned && (buyItem && npcPrice(i) > 0)))
   );
   const useableHats =
     have_($familiar`Mad Hatrack`) || checkhatrack
